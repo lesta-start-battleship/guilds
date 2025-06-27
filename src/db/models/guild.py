@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, JSON, DateTime, Float, ForeignKey, Boolean, Numeric
 from datetime import datetime
 from sqlalchemy.orm import relationship
-from models.database import Base
+from guild.database import Base
 
 
 class ProcessedFile(Base):
