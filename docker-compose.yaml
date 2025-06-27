@@ -1,0 +1,70 @@
+services:
+
+  # контейнер основного приложения
+  lesta-games-app:
+    build: .
+    container_name: ${APP_CONTAINER_NAME}
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - ./src:/src
+    env_file:
+      - .env
+    depends_on:
+      lesta-games-db:
+        condition: service_healthy
+    networks:
+      - lesta
+
+  # контейнер БД Postgres
+  lesta-games-db:
+    image: postgres:15-alpine
+    container_name: ${POSTGRES_CONTAINER_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-54320}:5432"
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck
+    healthcheck:
+      # https://www.postgresql.org/docs/current/app-pg-isready.html
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lesta
+
+  # контейнер PGAdmin
+  lesta-games-pg:
+    image: dpage/pgadmin4
+    container_name: ${PGADMIN_CONTAINER_NAME}
+    restart: always
+    ports:
+      - "${PGADMIN_PORT:-8888}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    networks:
+      - lesta
+
+  # контейнер Redis
+  lesta-games-redis:
+    image: redis:7
+    container_name: ${REDIS_CONTAINER_NAME}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - lesta
+
+
+volumes:
+  postgres_data:
+
+networks:
+  lesta:
+    driver: bridge
