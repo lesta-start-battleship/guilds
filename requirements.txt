@@ -28,7 +28,10 @@ prometheus-fastapi-instrumentator
 passlib
 bcrypt==4.0.1
 python-jose
+motor
+
 
 pytest
 pytest-cov
 pytest-mock
+pytest-asyncio
