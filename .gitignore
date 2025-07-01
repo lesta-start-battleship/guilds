@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 .vscode
+*.code-workspace
 
 # C extensions
 *.so

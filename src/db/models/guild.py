@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, func
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, func, Boolean
 
 from sqlalchemy.orm import relationship
 from db.database import Base
@@ -20,6 +20,11 @@ class Role(Base):
     __tablename__ = "roles"
 
     id = Column(Integer, primary_key=True, index=False)
+    
+    edit = Column(Boolean)
+    balance = Column(Boolean)
+    owner = Column(Boolean)
+    
     title = Column(String, index=False)
 
     members = relationship("Member", back_populates="role")
@@ -32,7 +37,7 @@ class Member(Base):
     user_id = Column(Integer, index=True)
 
     guild_id = Column(Integer, ForeignKey("guilds.id"))
-    role_id = Column(Integer, ForeignKey("roles.id"))
+    role_id = Column(Integer, ForeignKey("roles.id"), default=0)
 
     user_name = Column(String, index=True)
 
