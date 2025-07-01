@@ -5,12 +5,6 @@ from typing import Dict, List
 
 router = APIRouter()
 
-# 📦 Схемы запросов
-class DeclareWarRequest(BaseModel):
-    target_guild_id: int  # кто подтверждает войну
-    initiator_guild_id: int  # кто начал войну
-
-
 class ConfirmWarRequest(BaseModel):
     target_guild_id: int  # кто подтверждает войну
     initiator_guild_id: int  # кто начал войну
@@ -18,13 +12,6 @@ class ConfirmWarRequest(BaseModel):
 class DeclineWarRequest(BaseModel):
     guild_id: int  # инициатор, который отменяет войну
 
-# 🔹 Объявить войну
-@router.post("/declare")
-async def declare_war(data: DeclareWarRequest):
-    return {
-        "status": "pending",
-        "message": f"Guild {data.initiator_guild_id} declared war on Guild {data.target_guild_id}"
-    }
 
 # 🔹 Подтвердить войну
 @router.post("/confirm")
@@ -57,9 +44,9 @@ async def finish_war():
 @router.get("/ws-doc", include_in_schema=True)
 async def websocket_doc():
     return {
-        "url": "/guild/war/ws/{guild_id}",
+        "url": "/api/v1/guild/war/ws/{guild_id}",
         "method": "WebSocket",
-        "note": "Подключитесь через WebSocket-клиент. Пример: wss://example.com/guild/war/ws/1"
+        "note": "Подключитесь через WebSocket-клиент. Пример: ws://localhost:8000/api/v1/guild/war/ws/1"
     }
 
 
