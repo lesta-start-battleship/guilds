@@ -15,3 +15,4 @@ app = FastAPI(
 
 app.include_router(start, prefix="/api/v1", tags=["old"])
 app.include_router(guild_war_router, prefix="/api/v1", tags=["Guilds War"])
+

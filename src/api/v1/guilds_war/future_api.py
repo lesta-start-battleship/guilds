@@ -66,12 +66,17 @@ async def websocket_doc():
 active_connections: Dict[int, List[WebSocket]] = {}  # guild_id → [WebSocket]
 
 @router.websocket("/ws/{guild_id}")
-async def guild_war_socket(websocket: WebSocket, guild_id: int):
+async def guild_socket(websocket: WebSocket, guild_id: int):
     await websocket.accept()
     active_connections.setdefault(guild_id, []).append(websocket)
 
     try:
         while True:
-            await websocket.receive_text()  # можно слушать пустые пинги
+            message = await websocket.receive_text()
+
+            # 📢 Рассылаем ВСЕМ клиентам в этой гильдии
+            for conn in active_connections[guild_id]:
+                if conn != websocket:
+                    await conn.send_text(f"[guild {guild_id}] {message}")
     except WebSocketDisconnect:
         active_connections[guild_id].remove(websocket)
