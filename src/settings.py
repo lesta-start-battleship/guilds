@@ -49,5 +49,6 @@ class Settings(BaseSettings):
     )
 
 
+
 # инициализация настроек приложения
 settings = Settings()
