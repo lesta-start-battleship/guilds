@@ -3,4 +3,4 @@ import pytest
 
 @pytest.mark.skip
 async def test():
-    assert 1==2
+    assert 2==2

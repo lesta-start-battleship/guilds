@@ -1,43 +1,17 @@
 import asyncio
 
-from fastapi import status, WebSocket, WebSocketDisconnect
-from fastapi.routing import APIRouter
-
-from schemas.chat import CreateChatResponseSchema, CreateChatRequestSchema, ErrorSchema
-from services.chat_service import MongoChatRepository
-# from services.chat_service import ChatService
-from utils.chat_util import manager
+from fastapi import WebSocketDisconnect
 from fastapi import APIRouter, WebSocket
-from uuid import uuid4
 from services.mongo_instance import mongo_repo
 from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
-# chat_service = ChatService(get_chat_repository())
-
-
-@router.post(
-    '/',
-    # response_model=CreateChatResponseSchema,
-    status_code=status.HTTP_201_CREATED,
-    description='Эндпоинт создаёт новый чат, если чат с таким названием существует, то возвращается 400 ошибка',
-    responses={
-        status.HTTP_201_CREATED: {'model': CreateChatResponseSchema},
-        status.HTTP_400_BAD_REQUEST: {'model': ErrorSchema},
-    },
-)
-async def create_chat_handler(schema: CreateChatRequestSchema):
-    ''' Создать новый чат. '''
-    # добавить проверку пользователя
-    # добавить d jndtn uid чата
-    return {"status_code": status.HTTP_201_CREATED, "schema": schema}
-
-
 
 active_connections = {}
 
-@router.websocket("/ws/guild/{guild_id}")
-async def guild_chat_ws(guild_id: int, websocket: WebSocket):
+
+@router.websocket("/ws/guild/{guild_id}/{user_id}")
+async def guild_chat_ws(guild_id: int, user_id: int, websocket: WebSocket):
     await websocket.accept()
     repo = mongo_repo
 
@@ -58,10 +32,9 @@ async def guild_chat_ws(guild_id: int, websocket: WebSocket):
         print("❌ Ошибка при загрузке истории:", e)
 
     try:
-        # 🔄 Получение и отправка сообщений
         while True:
             data = await websocket.receive_json()
-            print("📥 Получено сообщение от клиента:", data)
+            print("Получено сообщение от клиента:", data)
 
             message_data = {
                 "guild_id": guild_id,
@@ -72,12 +45,11 @@ async def guild_chat_ws(guild_id: int, websocket: WebSocket):
 
             try:
                 saved = await repo.save_message(message_data)
-                print("💾 Сохранено сообщение:", saved)
+                print("Сохранено сообщение:", saved)
             except Exception as e:
-                print("❌ Ошибка при сохранении в Mongo:", e)
+                print("Ошибка при сохранении в Mongo:", e)
                 continue
 
-            # 📤 Рассылаем сообщение всем участникам гильдии
             for conn in active_connections.get(guild_id, []):
                 try:
                     await conn.send_json(jsonable_encoder(saved))
@@ -89,10 +61,8 @@ async def guild_chat_ws(guild_id: int, websocket: WebSocket):
     except Exception as e:
         print("❌ Общая ошибка:", e)
     finally:
-        # 🧹 Удаляем соединение при отключении
         try:
             active_connections[guild_id].remove(websocket)
             print("🧹 Соединение удалено из списка active_connections")
         except (KeyError, ValueError):
             pass
-
