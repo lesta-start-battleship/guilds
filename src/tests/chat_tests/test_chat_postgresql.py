@@ -10,7 +10,7 @@ def random_string(length=10):
 
 @pytest.mark.asyncio
 async def test_models_crud(async_session):
-    # Generate unique tag for guild
+    # Уникальный тэг guild
     unique_tag = f"test-tag-{random_string(5)}"
 
     # Создаём роль
