@@ -66,3 +66,4 @@ async def guild_chat_ws(guild_id: int, user_id: int, websocket: WebSocket):
             print("🧹 Соединение удалено из списка active_connections")
         except (KeyError, ValueError):
             pass
+
