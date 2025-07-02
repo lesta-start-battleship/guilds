@@ -16,9 +16,9 @@ class Project(BaseModel):
     """
 
     #: название проекта
-    title: str = "tfidf  Service"
+    title: str = "Guild  Service"
     #: описание проекта
-    description: str = "Сервис tfidf ."
+    description: str = "Сервис гильдий ."
     #: версия релиза
     release_version: str = os.getenv("PROJECT__RELEASE_VERSION")
 
