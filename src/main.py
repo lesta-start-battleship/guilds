@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from api.v1.start_endpoints import router as start
 from api.v1.guild import router as guild
 from api.v1.member import router as member
+from api.v1.guild_request import router as guild_request
 
 from settings import settings
 
@@ -14,6 +14,6 @@ app = FastAPI(
     debug=settings.debug
 )
 
-app.include_router(start, prefix="/api/v1", tags=["old"])
 app.include_router(guild, prefix='/api/v1/guild', tags=['guild'])
 app.include_router(member, prefix='/api/v1/member', tags=['member'])
+app.include_router(guild_request, prefix='api/v1/request', tags='guild request')

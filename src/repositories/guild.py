@@ -4,21 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from src.db.models.guild import Guild
+from db.models.guild import Guild
 
 class GuildRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
-        
-        
-    async def get_by_id(self, guild_id: int) -> Optional[Guild]:
-        result = await self.session.execute(
-            select(Guild).
-            options(selectinload(Guild.members)).
-            where(Guild.id == guild_id)
-            )
-        
-        return result.scalar_one_or_none()
     
     
     async def get_by_tag(self, tag: str) -> Optional[Guild]:
@@ -39,7 +29,7 @@ class GuildRepository:
         return result.scalar_one_or_none()
     
     
-    async def get_guilds(self, limit: int = 10, offset: int = 0) -> Optional[List[Guild]]:
+    async def get_guilds(self, limit: int = 10, offset: int = 0) -> List[Guild]:
         result = self.session.execute(
             select(Guild).
             limit(limit=limit).
@@ -64,8 +54,8 @@ class GuildRepository:
         return guild
     
     
-    async def delete(self, guild_id) -> bool:
-        guild = await self.get_by_id(guild_id)
+    async def delete(self, tag: str) -> bool:
+        guild = await self.get_by_tag(tag)
         
         if guild:
             await self.session.delete(guild)
@@ -76,18 +66,24 @@ class GuildRepository:
         
     async def edit(
         self,
-        guild_id: int,
+        tag: str,
         title: Optional[str],
-        description: Optional[str]
+        description: Optional[str],
+        is_full: Optional[bool],
+        is_active: Optional[bool]
         ) -> Optional[Guild]:
         
-        guild = await self.get_by_id(guild_id)
+        guild = await self.get_by_tag(tag)
         
         if guild:
             if title:
                 guild.title = title
             if description:
                 guild.description = description
+            if is_full is not None:
+                guild.is_full = is_full
+            if is_active is not None:
+                guild.is_active = is_active
                 
             await self.session.flush(guild)
             await self.session.commit()

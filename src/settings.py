@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     redis_url: str = Field(default='redis://localhost:6379')
     
     max_members: int = Field(default=50)
+    min_members: int = Field(default=3)
+    
+    tag_min_length: int = Field(default=3)
+    tag_max_length: int = Field(default=7)
 
     class Config:
         env_file = ".env"
