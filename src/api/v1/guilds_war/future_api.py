@@ -5,40 +5,22 @@ from typing import Dict, List
 
 router = APIRouter()
 
-class ConfirmWarRequest(BaseModel):
-    target_guild_id: int  # кто подтверждает войну
-    initiator_guild_id: int  # кто начал войну
 
-class DeclineWarRequest(BaseModel):
-    guild_id: int  # инициатор, который отменяет войну
-
-
-# 🔹 Подтвердить войну
-@router.post("/confirm")
-async def confirm_war(data: ConfirmWarRequest):
-    return {
-        "status": "active",
-        "message": f"Guild {data.guild_id} confirmed the war"
-    }
-
-
-# 🔹 Отменить запрос на войну
-@router.post("/decline")
-async def decline_war(data: DeclineWarRequest):
+# Отменить запрос на войну вручную
+@router.post("/cancel")
+async def cancel_war():
     return {
         "status": "cancelled",
-        "message": f"Guild {data.guild_id} cancelled the war request"
+        "message": f"Guild  cancelled the war request"
     }
 
-
-# 🔚 Завершение войны (заглушка)
+# Завершение войны (заглушка)
 @router.post("/finish")
 async def finish_war():
     return {
         "status": "finished",
         "message": "Guild war has been finished"
     }
-
 
 
 @router.get("/ws-doc", include_in_schema=True)

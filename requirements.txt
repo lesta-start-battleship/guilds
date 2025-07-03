@@ -32,3 +32,4 @@ python-jose
 pytest
 pytest-cov
 pytest-mock
+pytest-asyncio

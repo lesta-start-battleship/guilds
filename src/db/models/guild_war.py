@@ -1,6 +1,7 @@
 from sqlalchemy import Enum as SqlEnum, Column, Integer, String, ForeignKey, DateTime
 from enum import Enum
 from datetime import datetime, timezone
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 
 from db.database import Base
 
@@ -18,8 +19,17 @@ class GuildWarRequest(Base):
     id = Column(Integer, primary_key=True, index=True)
     initiator_guild_id = Column(Integer, ForeignKey("guilds.id"))
     target_guild_id = Column(Integer, ForeignKey("guilds.id"))
-    status = Column(SqlEnum(WarStatus), default=WarStatus.pending, nullable=False)
-    created_at = Column(
-        DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc)
-    )
+    status = Column(SqlEnum(WarStatus, name="warstatus"), default=WarStatus.pending, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class GuildWarRequestHistory(Base):
+    __tablename__ = "guild_war_requests_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    request_id = Column(Integer, index=True, nullable=False)
+    initiator_guild_id = Column(Integer, index=True)
+    target_guild_id = Column(Integer, index=True)
+    status = Column(SqlEnum(WarStatus, name="warstatus"), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False)
+    finished_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc))

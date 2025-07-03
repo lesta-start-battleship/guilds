@@ -15,3 +15,14 @@ class DeclareWarResponse(BaseModel):
     target_guild_id: int = Field(..., description="ID целевой гильдии")
     status: WarStatus = Field(..., description="Статус заявки")
     created_at: datetime = Field(..., description="Дата и время создания заявки")
+
+
+class ConfirmWarRequest(BaseModel):
+    user_id: int = Field(..., description="ID пользователя, подтверждающего войну")
+
+class ConfirmWarResponse(BaseModel):
+    request_id: int
+    initiator_guild_id: int
+    target_guild_id: int
+    status: WarStatus
+    updated_at: datetime
