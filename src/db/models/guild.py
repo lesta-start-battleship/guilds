@@ -75,7 +75,7 @@ class Member(Base):
     guild_tag = Column(String, ForeignKey("guilds.tag"))
     role_id = Column(Integer, ForeignKey("roles.id"), default=0)
 
-    user_name = Column(String, index=True)
+    user_name = Column(String, unique=True, index=True, nullable=True)
 
     guild = relationship("Guild", back_populates="members")
     role = relationship("Role", back_populates="members")
@@ -84,7 +84,7 @@ class Member(Base):
 class GuildChatMessage(Base):
     __tablename__ = "guild_chat_messages"
 
-    id = Column(Integer, primary_key=True, index=True) # проставили индексы для более быстрой работы БД
+    id = Column(Integer, primary_key=True, index=True)  # проставили индексы для более быстрой работы БД
     guild_id = Column(Integer, ForeignKey("guilds.id"), index=True)
     user_id = Column(Integer, index=True)
 

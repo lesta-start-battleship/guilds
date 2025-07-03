@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from db.models.guild import Guild
+from db.models.guild import Guild
 
 class GuildRepository:
     def __init__(self, session: AsyncSession):
@@ -32,13 +33,11 @@ class GuildRepository:
     async def get_guilds(self, limit: int = 10, offset: int = 0) -> List[Guild]:
         result = self.session.execute(
             select(Guild).
-            limit(limit=limit).
-            offset(offset=offset)
-            )
-        
+            limit(limit).
+            offset(offset)
+        )
         return result.scalars().all()
-        
-        
+
     async def create(
         self,
         owner_id: int,
@@ -88,4 +87,4 @@ class GuildRepository:
             await self.session.flush(guild)
             await self.session.commit()
             
-            return guild
+        return guild

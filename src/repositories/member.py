@@ -9,15 +9,14 @@ from db.models.guild import Member, Role
 class MemberRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
-        
-        
+
     async def get_by_user_id(self, user_id: int) -> Optional[Member]:
         result = await self.session.execute(
             select(Member).
             options(selectinload(Role)).
             where(Member.user_id == user_id)
-            )
-        
+        )
+
         return result.scalar_one_or_none()
     
     
@@ -28,8 +27,8 @@ class MemberRepository:
             where(Member.guild_tag == guild_tag).
             limit(limit=limit).
             offset(offset=offset)
-            )
-        
+        )
+
         return result.scalars().all()
     
     
@@ -53,8 +52,7 @@ class MemberRepository:
         await self.session.add(member)
         await self.session.commit()
         return member
-            
-            
+
     async def delete_member(self, user_id: int) -> bool:
         member = await self.get_by_user_id(user_id)
         if member:
@@ -65,20 +63,19 @@ class MemberRepository:
     
     
     async def edit(
-        self,
-        user_id: Optional[int],
-        user_name: Optional[str],
-        role_id: Optional[int]
-        ) -> Optional[Member]:
-        
+            self,
+            user_id: Optional[int],
+            role_id: Optional[int],
+            user_name: Optional[str] = None,
+    ) -> Optional[Member]:
+
         member = await self.get_by_user_id(user_id=user_id)
-        
+
         if member:
             if user_name:
                 member.user_name = user_name
             if role_id:
                 member.role_id = role_id
-            await self.session.flush(member)
+            await self.session.flush([member])
             await self.session.commit()
-            return member
-        
+        return member
