@@ -1,9 +1,14 @@
 import asyncio
 
-from fastapi import WebSocketDisconnect
+from fastapi import WebSocketDisconnect, Depends
 from fastapi import APIRouter, WebSocket
-from services.mongo_instance import mongo_repo
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from db.database import get_db
+from dependencies.chat import mongo_repo
+from services.chat_service import get_member
+from utils.chat_util import manager
 
 router = APIRouter()
 
@@ -11,18 +16,24 @@ active_connections = {}
 
 
 @router.websocket("/ws/guild/{guild_id}/{user_id}")
-async def guild_chat_ws(guild_id: int, user_id: int, websocket: WebSocket):
-    await websocket.accept()
-    repo = mongo_repo
+async def guild_chat_ws(
+    guild_id: int,
+    user_id: int,
+    websocket: WebSocket,
+    db: AsyncSession = Depends(get_db)
+):
+    member = await get_member(db, user_id, guild_id)
+    mongo = mongo_repo
+    if not member:
+        await websocket.accept()
+        await websocket.send_json({"error": "Access denied: you are not a member of this guild."})
+        await websocket.close()
+        return
 
-    # Инициализируем список подключений для гильдии
-    if guild_id not in active_connections:
-        active_connections[guild_id] = []
-    active_connections[guild_id].append(websocket)
+    await manager.connect(guild_id, websocket)
 
     try:
-        history = await repo.get_messages_by_guild(guild_id)
-        print("📜 История сообщений:", history)  # Логируем историю сообщений
+        history = await mongo.get_messages_by_guild(guild_id)
         await asyncio.sleep(0.1)
         await websocket.send_json({
             "type": "history",
@@ -34,7 +45,7 @@ async def guild_chat_ws(guild_id: int, user_id: int, websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_json()
-            print("Получено сообщение от клиента:", data)
+            print("📩 Получено сообщение от клиента:", data)
 
             message_data = {
                 "guild_id": guild_id,
@@ -44,26 +55,18 @@ async def guild_chat_ws(guild_id: int, user_id: int, websocket: WebSocket):
             }
 
             try:
-                saved = await repo.save_message(message_data)
-                print("Сохранено сообщение:", saved)
+                saved = await mongo.save_message(message_data)
+                print("✅ Сохранено сообщение:", saved)
+                await manager.broadcast(guild_id, jsonable_encoder(saved))
             except Exception as e:
-                print("Ошибка при сохранении в Mongo:", e)
-                continue
-
-            for conn in active_connections.get(guild_id, []):
-                try:
-                    await conn.send_json(jsonable_encoder(saved))
-                except Exception as e:
-                    print("❌ Ошибка при отправке клиенту:", e)
+                print("❌ Ошибка при сохранении в Mongo:", e)
 
     except WebSocketDisconnect:
         print("🔌 Клиент отключился")
     except Exception as e:
         print("❌ Общая ошибка:", e)
     finally:
-        try:
-            active_connections[guild_id].remove(websocket)
-            print("🧹 Соединение удалено из списка active_connections")
-        except (KeyError, ValueError):
-            pass
+        manager.disconnect(guild_id, websocket)
+        print("🧹 Соединение удалено")
+
 

@@ -40,9 +40,9 @@ async def get_guild_by_id(
     
     return GuildResponse(
         tag=guild.tag,
-        name=guild.name,
         desciption=guild.description,
         id=guild.id,
+        title=guild.title,
         owner_id=guild.owner_id
         )
     

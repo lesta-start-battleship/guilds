@@ -89,4 +89,4 @@ class GuildRepository:
             await self.session.flush(guild)
             await self.session.commit()
             
-            return guild
+        return guild
