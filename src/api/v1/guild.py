@@ -1,11 +1,11 @@
 from typing import Annotated, List
-from fastapi import APIRouter, Path, Query, status, Depends
+from fastapi import APIRouter, Path, Query, status, Depends, HTTPException
 
-from src.repositories.guild import GuildRepository
-from src.dependencies.guild import get_guild_repository, get_member_repository, get_role_repository
-from src.repositories.member import MemberRepository
-from src.repositories.role import RoleRepository
-from src.schemas.guild import GuildResponse, CreateGuildRequest, EditGuildRequest
+from repositories.guild import GuildRepository
+from dependencies.guild import get_guild_repository, get_member_repository, get_role_repository
+from repositories.member import MemberRepository
+from repositories.role import RoleRepository
+from schemas.guild import GuildResponse, CreateGuildRequest, EditGuildRequest
 
 router = APIRouter()
 
@@ -63,44 +63,41 @@ async def get_guild_by_tag(
         id=guild.id,
         owner_id=guild.owner_id
         )
-    
-    
+
 @router.post('/', response_model=GuildResponse)
 async def create_guild(
-    guild_form: CreateGuildRequest,
-    user_id: int,
-    guild_repo: GuildRepository = Depends(get_guild_repository),
-    member_repo: MemberRepository = Depends(get_member_repository),
-    role_repo: RoleRepository = Depends(get_role_repository)
-    ):
-    
+        guild_form: CreateGuildRequest,
+        user_id: int,
+        guild_repo: GuildRepository = Depends(get_guild_repository),
+        member_repo: MemberRepository = Depends(get_member_repository),
+        role_repo: RoleRepository = Depends(get_role_repository)
+):
     if await guild_repo.get_by_tag(guild_form.tag):
-        return status.HTTP_409_CONFLICT
-    
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Guild with this tag already exists")
+
     if await member_repo.get_by_user_id(user_id):
-        return status.HTTP_409_CONFLICT
-        
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already in a guild")
+
     new_guild = await guild_repo.create(
         owner_id=user_id,
         tag=guild_form.tag,
         title=guild_form.title,
         description=guild_form.desciption,
-        )
-    
+    )
     if not new_guild:
-        status.HTTP_400_BAD_REQUEST
-        
-    owner = await member_repo.add_member(new_guild.id, user_id, 'Stranger')
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to create guild")
+
+    owner = await member_repo.add_member(new_guild.id, user_id, role_id=4)
     if not owner:
-        return status.HTTP_400_BAD_REQUEST
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to add member")
+
     role = await role_repo.get_by_title('owner')
     if not role:
-        return status.HTTP_404_NOT_FOUND
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role 'owner' not found")
+
     if not await member_repo.edit(user_id=owner.user_id, role_id=role.id):
-        return status.HTTP_400_BAD_REQUEST
-        
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Failed to update member role")
+
     return GuildResponse(
         id=new_guild.id,
         owner_id=new_guild.owner_id,
@@ -108,7 +105,6 @@ async def create_guild(
         title=new_guild.title,
         desciption=new_guild.description
     )
-    
     
 @router.delete('/{guild_id}')
 async def delete_guild(
