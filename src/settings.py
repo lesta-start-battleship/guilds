@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+MONGO_DATABASE_URL = os.getenv("MONGO_DB_CONNECTION_URI")
 
 
 class Project(BaseModel):
@@ -42,7 +43,7 @@ class Settings(BaseSettings):
         default=SQLALCHEMY_DATABASE_URL
     )
 
-    mongo_db: str = Field(default=SQLALCHEMY_DATABASE_URL)
+    mongo_db: str = Field(default=MONGO_DATABASE_URL)
 
     model_config = SettingsConfigDict(
         env_file=".env",

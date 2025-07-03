@@ -4,22 +4,27 @@ from fastapi.websockets import WebSocketState
 from typing import List
 
 
-# Добавляем менеджер соединений WebSocket
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: dict[int, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, guild_id: int, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        self.active_connections.setdefault(guild_id, []).append(websocket)
 
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+    def disconnect(self, guild_id: int, websocket: WebSocket):
+        try:
+            self.active_connections[guild_id].remove(websocket)
+            if not self.active_connections[guild_id]:
+                del self.active_connections[guild_id]
+        except (KeyError, ValueError):
+            pass  # Безопасное удаление
 
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
+    async def broadcast(self, guild_id: int, message: dict):
+        connections = self.active_connections.get(guild_id, [])
+        for connection in connections:
             if connection.client_state == WebSocketState.CONNECTED:
-                await connection.send_text(message)
+                await connection.send_json(message)
 
 
 manager = ConnectionManager()
