@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.database import get_db
-from src.repositories.guild import GuildRepository
-from src.repositories.member import MemberRepository
-from src.repositories.role import RoleRepository
+from db.database import get_db
+from repositories.guild import GuildRepository
+from repositories.member import MemberRepository
+from repositories.role import RoleRepository
 
 def get_guild_repository(session: AsyncSession = Depends(get_db)):
     return GuildRepository(session)

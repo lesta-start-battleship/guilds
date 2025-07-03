@@ -3,7 +3,7 @@ from typing import Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from src.db.models.guild import Role
+from db.models.guild import Role
 
 class RoleRepository:
     def __init__(self, session: AsyncSession):
@@ -20,14 +20,11 @@ class RoleRepository:
     
     
     async def get_by_title(self, title: str) -> Optional[Role]:
-        result = self.session.execute(
-            select(Role).
-            where(Role.title == title)
-            )
-        
+        result = await self.session.execute(
+            select(Role).where(Role.title == title)
+        )
         return result.scalar_one_or_none()
-    
-    
+
     async def get_roles(self) -> Optional[List[Role]]:
         result = self.session.execute(
             select(Role)

@@ -1,12 +1,11 @@
 from typing import Annotated, List
 from fastapi import APIRouter, Path, Query, status, Depends
 
-from src.dependencies.guild import get_guild_repository, get_member_repository, get_role_repository
-from src.repositories.guild import GuildRepository
-from src.repositories.member import MemberRepository
-from src.repositories.role import RoleRepository
-from src.schemas.member import AddMemberRequest, EditMemberRequest, MemberResponse
-from src.services.redis_instance import redis
+from dependencies.guild import get_guild_repository, get_member_repository, get_role_repository
+from repositories.guild import GuildRepository
+from repositories.member import MemberRepository
+from repositories.role import RoleRepository
+from schemas.member import MemberResponse, AddMemberRequest, EditMemberRequest
 
 router = APIRouter()
 
@@ -133,7 +132,8 @@ async def edit_member(
     if guild_member_id != guild.owner_id:
         return status.HTTP_403_FORBIDDEN
     
-    member = await member_repo.edit(edit_form.user_id, role_id=edit_form.role_id)
+    member = await member_repo.add_member(guild_id, member_form.user_id, member_form.user_name, role_id=member.role_id)
+
     return MemberResponse(
         user_id=member.user_id,
         user_name=member.user_name,
