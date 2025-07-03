@@ -5,12 +5,9 @@ class AddMemberRequest(BaseModel):
     user_id: int
     user_name: Optional[str]
 
-class EditMemberRequest(AddMemberRequest):
-    user_name: Optional[str]
+class EditMemberRequest(BaseModel):
     role_id: Optional[int]
     
-class MemberResponse(EditMemberRequest):
-    user_id: int
-    user_name: Optional[str]
+class MemberResponse(AddMemberRequest):
     guild_id: int
     role_id: Optional[int]
