@@ -12,8 +12,11 @@ class Guild(Base):
     description = Column(String, unique=False, index=False)
     title = Column(String, unique=False, index=False)
     owner_id = Column(Integer)
+    
+    is_active = Column(Boolean, default=False)
+    is_full = Column(Boolean, default=False)
 
-    members = relationship("Member", back_populates="guild")
+    members = relationship("Member", back_populates="guild", cascade="all, delete-orphan")
 
 
 class Role(Base):
@@ -22,7 +25,6 @@ class Role(Base):
     id = Column(Integer, primary_key=True, index=False)
 
     edit = Column(Boolean)
-    balance = Column(Boolean)
     owner = Column(Boolean)
 
     title = Column(String, index=False)
