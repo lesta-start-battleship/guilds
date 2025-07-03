@@ -19,11 +19,12 @@ async def get_guilds(
     return [
         GuildResponse(
             tag=guild.tag,
-            name=guild.name,
             desciption=guild.description,
+            title=guild.title,
             id=guild.id,
             owner_id=guild.owner_id
-        ) for guild in guilds
+        )
+        for guild in guilds
     ]
     
     

@@ -37,18 +37,15 @@ class GuildRepository:
             )
         
         return result.scalar_one_or_none()
-    
-    
+
     async def get_guilds(self, limit: int = 10, offset: int = 0) -> Optional[List[Guild]]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Guild).
-            limit(limit=limit).
-            offset(offset=offset)
-            )
-        
+            limit(limit).
+            offset(offset)
+        )
         return result.scalars().all()
-        
-        
+
     async def create(
         self,
         owner_id: int,
