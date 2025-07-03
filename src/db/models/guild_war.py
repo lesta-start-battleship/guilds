@@ -22,7 +22,6 @@ class GuildWarRequest(Base):
     status = Column(SqlEnum(WarStatus, name="warstatus"), default=WarStatus.pending, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-
 class GuildWarRequestHistory(Base):
     __tablename__ = "guild_war_requests_history"
 
