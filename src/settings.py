@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     
     max_members: int = Field(default=50)
     mongo_db: str = Field(default=MONGO_DATABASE_URL)
+    min_members: int = Field(default=3)
+    
+    tag_min_length: int = Field(default=3)
+    tag_max_length: int = Field(default=7)
 
     model_config = SettingsConfigDict(
         env_file=".env",
