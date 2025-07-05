@@ -1,12 +1,16 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Path, Query, status, Depends
 
-from schemas.base import Response
+from schemas.base import MessageResponse, Response
 from schemas.guild import GuildResponse, CreateGuildRequest, EditGuildRequest, GuildPagination
+
 from services.guild import GuildService
 from dependencies.services import get_guild_service
+
 from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException, GuildAlreadyExistException
 from exceptions.member import MemberIsNotOwnerException, MemberAlreadyInGuildException
+
 from api.responses.guild import guild_not_found, guild_already_exists, uncorrect_guild_tag
 from api.responses.member import member_already_in_guild, member_is_not_owner
 
@@ -53,7 +57,7 @@ async def create_guild(
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        guild = await guild_service.create_guild(guild_form, user_id)
+        guild = await guild_service.create_guild(guild_form, user_id, None)
         return Response(
             error_code=status.HTTP_201_CREATED,
             value=guild
@@ -66,9 +70,9 @@ async def create_guild(
         return member_already_in_guild
 
 
-@router.delete('/{tag}', response_model=Response)
+@router.delete('/{tag}', response_model=MessageResponse)
 async def delete_guild(
-    tag: Annotated[int, Path(..., description='Guild tag')],
+    tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: int,
     guild_service: GuildService = Depends(get_guild_service)
     ):
@@ -88,12 +92,12 @@ async def delete_guild(
 @router.patch('/{tag}', response_model=Response[GuildResponse])
 async def edit_guild(
     edit_form: EditGuildRequest,
-    tag: Annotated[int, Path(..., description='Guild tag')],
+    tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: int,
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        guild = await guild_service.edit_guild(tag, user_id, **edit_form)
+        guild = await guild_service.edit_guild(tag, user_id, edit_form)
         return Response(
             error_code=status.HTTP_200_OK,
             value=guild

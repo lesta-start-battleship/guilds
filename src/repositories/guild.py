@@ -31,7 +31,7 @@ class GuildRepository:
     
     
     async def get_guilds(self, limit: int = 10, offset: int = 0) -> List[Guild]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Guild).
             limit(limit).
             offset(offset)
@@ -66,10 +66,10 @@ class GuildRepository:
     async def edit(
         self,
         tag: str,
-        title: Optional[str],
-        description: Optional[str],
-        is_full: Optional[bool],
-        is_active: Optional[bool]
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        is_full: Optional[bool] = None,
+        is_active: Optional[bool] = None
         ) -> Optional[Guild]:
         
         guild = await self.get_by_tag(tag)
@@ -84,7 +84,7 @@ class GuildRepository:
             if is_active is not None:
                 guild.is_active = is_active
                 
-            await self.session.flush(guild)
+            await self.session.flush([guild])
             await self.session.commit()
             
         return guild

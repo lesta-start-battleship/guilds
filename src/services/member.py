@@ -168,7 +168,7 @@ class MemberService:
         if not guild_member:
             raise MemberNotFoundException
         
-        if guild_member.guild_tag != tag or guild_user_id != guild.owner_id or \
+        if guild_member.guild_tag != tag or guild_user_id == user_id or guild_user_id != guild.owner_id or \
         not self.permission_repo.get_by_title(EnumPermissions.promote_members) in guild_member.role.permissions:
             raise MemberNotHavePermissionException
         

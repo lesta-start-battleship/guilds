@@ -5,7 +5,7 @@ from schemas.base import BasePagination
 
 class EditGuildRequest(BaseModel):
     title: Optional[str]
-    desciption: Optional[str]
+    description: Optional[str]
 
 class CreateGuildRequest(EditGuildRequest):
     tag: str

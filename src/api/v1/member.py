@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, status, Depends
 
-from schemas.base import Response
+from schemas.base import MessageResponse, Response
 from schemas.member import EditMemberRequest, MemberResponse, MemberPagination
 
 from dependencies.services import get_member_service
@@ -34,7 +34,7 @@ async def get_member_by_user_id(
     
     
 @router.get('/{tag}', response_model=Response[MemberPagination])
-async def get_members_by_guild_id(
+async def get_members_by_guild_tag(
     tag: Annotated[str, Path(..., description='Guild tag')],
     offset: int = Query(0, ge=0, description='Offset from the beginning'),
     limit: int = Query(10, ge=1, description='Number of items to return'),
@@ -56,7 +56,7 @@ async def get_members_by_guild_id(
         return guild_not_found
         
         
-@router.delete('/{tag}/{user_id}')
+@router.delete('/{tag}/{user_id}', response_model=MessageResponse)
 async def delete_member(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: Annotated[int, Path(..., description='User ID')],
@@ -80,7 +80,7 @@ async def delete_member(
         return member_not_have_permissoin
 
 
-@router.delete('/{tag}/exit')
+@router.delete('/{tag}/exit', response_model=MessageResponse)
 async def exit_from_guild(
     tag: Annotated[int, Path(..., description='Guild tag')],
     user_id: int,
@@ -103,7 +103,7 @@ async def exit_from_guild(
         return member_not_have_permissoin
 
     
-@router.patch('/{tag}/{user_id}', response_model=MemberResponse)
+@router.patch('/{tag}/{user_id}', response_model=Response[MemberResponse])
 async def edit_member(
     tag: Annotated[int, Path(..., description='Guild tag')],
     guild_member_id: int,

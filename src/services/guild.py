@@ -4,8 +4,6 @@ from repositories.guild import GuildRepository
 from repositories.member import MemberRepository
 from repositories.role import RoleRepository
 
-from db.models.guild import Guild
-
 from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException, GuildAlreadyExistException
 from exceptions.member import MemberIsNotOwnerException, MemberAlreadyInGuildException, MemberNotFoundException
 from exceptions.role import RoleNotFoundException
@@ -57,7 +55,7 @@ class GuildService:
             owner_id=user_id,
             tag=guild_req.tag,
             title=guild_req.title,
-            description=guild_req.desciption,
+            description=guild_req.description,
             )
         
         if not new_guild:
@@ -88,7 +86,7 @@ class GuildService:
         if guild.owner_id != user_id:
             raise MemberIsNotOwnerException
             
-        guild = await self.guild_repo.edit(tag, edit_form.title, edit_form.desciption)
+        guild = await self.guild_repo.edit(tag, edit_form.title, edit_form.description)
         return guild_orm_to_dto(guild)
     
     

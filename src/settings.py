@@ -9,7 +9,7 @@ load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 MONGO_DATABASE_URL = os.getenv("MONGO_DB_CONNECTION_URI")
-
+REDIS_URL = os.getenv('REDIS_URL')
 
 class Project(BaseModel):
     """
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     # secret_key: str = Field(default=os.getenv("SECRET_KEY"))
     # algorithm: str = Field(default=os.getenv("ALGORITHM"))
     # access_token_expire_minutes: int = Field(default=os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
-    redis_url: str = Field(default='redis://localhost:6379')
+    redis_url: str = Field(default=REDIS_URL)
     
     max_members: int = Field(default=50)
     mongo_db: str = Field(default=MONGO_DATABASE_URL)

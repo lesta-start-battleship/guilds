@@ -1,16 +1,17 @@
+from datetime import datetime
 from typing import Dict
 
 from db.models.guild import Guild, Member, Role
 from schemas.guild import GuildResponse
 from schemas.member import MemberResponse
 from schemas.role import RoleResponse
-from schemas.requests_invites import RequestResponse
+from schemas.guild_request import RequestResponse
 
 def guild_orm_to_dto(guild: Guild) -> GuildResponse:
     return GuildResponse(
         tag=guild.tag,
-        title=guild.name,
-        desciption=guild.description,
+        title=guild.title,
+        description=guild.description,
         id=guild.id,
         owner_id=guild.owner_id,
         is_active=guild.is_active,
@@ -35,9 +36,9 @@ def role_orm_to_dto(role: Role) -> RoleResponse:
         permissions=set([p.permission for p in role.permissions])
     )
 
-def cache_to_dto(cache: Dict[str, object]) -> RequestResponse:
+def cache_to_dto(cache: Dict[str, str]) -> RequestResponse:
     return RequestResponse(
-        user_id=cache['user_id'],
+        user_id=int(cache['user_id']),
         # user_name=cache['user_name'],
-        created_at=cache['created_at']
+        created_at=datetime.fromisoformat(cache['created_at'])
     )

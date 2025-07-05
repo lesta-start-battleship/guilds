@@ -1,8 +1,10 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Path, status, Depends
 
-from schemas.base import Response
+from schemas.base import MessageResponse, Response
 from schemas.member import MemberResponse
+from schemas.guild_request import RequestPagination
 
 from dependencies.services import get_request_service
 from services.guild_request import RequestService
@@ -17,17 +19,21 @@ from api.responses.guild_request import request_already_exists, request_not_foun
 
 router = APIRouter()
 
-@router.get('/{guild_id}', response_model=Response)
+@router.get('/{tag}', response_model=Response[RequestPagination])
 async def get_requests(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: int,
     request_service: RequestService = Depends(get_request_service)
     ):
     try:
-        requests = request_service.get_requests_by_guild_tag(tag, user_id)
+        requests = await request_service.get_requests_by_guild_tag(tag, user_id)
         return Response(
             error_code=status.HTTP_200_OK,
-            value=requests
+            value=RequestPagination(
+                items=requests,
+                total_items=len(requests),
+                total_pages=0
+            )
         )
     except UncorrectGuildTagException:
         return uncorrect_guild_tag
@@ -39,7 +45,7 @@ async def get_requests(
         return member_not_have_permissoin
 
 
-@router.post('/{guild_id}', response_model=Response)
+@router.post('/{tag}', response_model=MessageResponse)
 async def send_requests(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: int,
@@ -47,7 +53,7 @@ async def send_requests(
     ):
     try:
         await request_service.add_request(tag, user_id)
-        return Response(
+        return MessageResponse(
             error_code=status.HTTP_201_CREATED
         )
     except UncorrectGuildTagException:
@@ -88,7 +94,8 @@ async def apply_request(
     except MemberAlreadyInGuildException:
         return member_already_in_guild
 
-@router.delete('/{tag}/{user_id}/cancel')
+
+@router.delete('/{tag}/{user_id}/cancel', response_model=MessageResponse)
 async def cancel_request(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: Annotated[int, Path(..., description='User ID')],
@@ -97,7 +104,7 @@ async def cancel_request(
     ):
     try:
         await request_service.cancel_request(tag, guild_member_id, user_id)
-        return Response(
+        return MessageResponse(
             error_code=status.HTTP_200_OK
         )
     except UncorrectGuildTagException:

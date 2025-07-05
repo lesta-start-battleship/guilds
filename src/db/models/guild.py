@@ -61,7 +61,7 @@ class Permission(Base):
 class RolePermission(Base):
     __tablename__ = 'role_permission'
     
-    role_id: Mapped[int] = mapped_column(ForeignKey('role.id'), primary_key=True)
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'), primary_key=True)
     permission_id: Mapped[int] = mapped_column(ForeignKey('permissions.id'), primary_key=True)
 
 
@@ -72,7 +72,7 @@ class Member(Base):
     user_id = Column(Integer, index=True)
 
     guild_id = Column(Integer, ForeignKey("guilds.id"))
-    guild_tag = Column(String, ForeignKey("guilds.tag"))
+    guild_tag = Column(String)
     role_id = Column(Integer, ForeignKey("roles.id"), default=0)
 
     user_name = Column(String, unique=True, index=True, nullable=True)

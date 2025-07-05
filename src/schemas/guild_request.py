@@ -1,0 +1,11 @@
+from datetime import datetime
+from pydantic import BaseModel
+
+from schemas.base import BasePagination
+
+class RequestResponse(BaseModel):
+    user_id: int
+    created_at: datetime
+
+class RequestPagination(BasePagination[RequestResponse]):
+    ...

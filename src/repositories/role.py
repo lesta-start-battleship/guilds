@@ -12,7 +12,7 @@ class RoleRepository:
         
     
     async def get_by_id(self, role_id: int) -> Optional[Role]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Role).
             options(selectinload(Role.permissions)).
             where(Role.id == role_id)
@@ -22,7 +22,7 @@ class RoleRepository:
     
     
     async def get_by_title(self, title: str) -> Optional[Role]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Role).
             options(selectinload(Role.permissions)).
             where(Role.title == title)
@@ -32,7 +32,7 @@ class RoleRepository:
     
     
     async def get_roles(self) -> List[Role]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Role)
             )
         
@@ -53,7 +53,7 @@ class RoleRepository:
             if permissions:
                 role.permissions = permissions
             
-            await self.session.add(role)
+            self.session.add(role)
             await self.session.commit()
             return role
     
@@ -73,7 +73,7 @@ class RoleRepository:
             if permissions or permissions == []:
                 role.permissions = permissions
             
-            await self.session.flush(role)
+            await self.session.flush([role])
             await self.session.commit()
             return role
     
@@ -85,7 +85,7 @@ class RoleRepository:
         role = await self.get_by_id(role_id=role_id)
         
         if role:
-            await self.session.delete(role)
+            self.session.delete(role)
             await self.session.commit()
             return True
         return False

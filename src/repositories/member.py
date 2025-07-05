@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
-from db.models.guild import Member, Role
+from db.models.guild import Member
 
 class MemberRepository:
     def __init__(self, session: AsyncSession):
@@ -13,7 +13,7 @@ class MemberRepository:
     async def get_by_user_id(self, user_id: int) -> Optional[Member]:
         result = await self.session.execute(
             select(Member).
-            options(selectinload(Role)).
+            options(selectinload(Member.role)).
             where(Member.user_id == user_id)
         )
 
@@ -23,7 +23,7 @@ class MemberRepository:
     async def get_list_by_guild_tag(self, guild_tag: str, limit: int = 10, offset: int = 0) -> List[Member]:
         result = await self.session.execute(
             select(Member).
-            options(selectinload(Role)).
+            options(selectinload(Member.role)).
             where(Member.guild_tag == guild_tag).
             limit(limit=limit).
             offset(offset=offset)
@@ -49,14 +49,14 @@ class MemberRepository:
         ) -> Optional[Member]:
         
         member = Member(user_id=new_user_id, guild_id=guild_id, guild_tag=guild_tag, user_name=user_name)
-        await self.session.add(member)
+        self.session.add(member)
         await self.session.commit()
         return member
 
     async def delete_member(self, user_id: int) -> bool:
         member = await self.get_by_user_id(user_id)
         if member:
-            await self.session.delete(member)
+            self.session.delete(member)
             await self.session.commit()
             return True
         return False

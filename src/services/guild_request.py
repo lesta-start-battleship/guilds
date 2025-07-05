@@ -2,10 +2,11 @@ from typing import List
 
 from repositories.guild import GuildRepository
 from repositories.role import RoleRepository
+from repositories.permisson import PermissionRepository
 
 from db.models.guild import EnumPermissions
 
-from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException
+from exceptions.guild import GuildIsFullException, UncorrectGuildTagException, GuildNotFoundException
 from exceptions.member import MemberAlreadyInGuildException, MemberNotFoundException, MemberNotHavePermissionException
 from exceptions.guild_request import RequestAlreadyExistException, RequestNotFoundException
 
@@ -14,7 +15,7 @@ from services.member import MemberService
 from cache.redis_repo import RedisRepository
 from utils.string_validator import validate_str
 
-from schemas.requests_invites import RequestResponse
+from schemas.guild_request import RequestResponse
 from schemas.member import AddMemberRequest, MemberResponse
 
 class RequestService:
@@ -23,11 +24,13 @@ class RequestService:
         guild_repo: GuildRepository,
         member_service: MemberService,
         role_repo: RoleRepository,
+        permission_repo: PermissionRepository,
         cache: RedisRepository
         ):
         self.guild_repo = guild_repo
         self.member_service = member_service
         self.role_repo = role_repo
+        self.permission_repo = permission_repo
         self.cache = cache
         
     
@@ -49,18 +52,17 @@ class RequestService:
     
     
     async def get_requests_by_guild_tag(self, tag: str, user_id: int) -> List[RequestResponse]:
-        self.validate_guild_member(tag, user_id)
+        await self.validate_guild_member(tag, user_id)
         requests = await self.cache.get_requests(tag)
         return [cache_to_dto(r) for r in requests]
     
     
     async def add_request(self, tag: str, user_id: int) -> None:
         try:
-            member = await self.member_service.get_user_by_id(user_id)
+            await self.member_service.get_user_by_id(user_id)
+            raise MemberAlreadyInGuildException
         except MemberNotFoundException:
             pass
-        if member:
-            raise MemberAlreadyInGuildException
         
         if not validate_str(tag):
             raise UncorrectGuildTagException
@@ -69,41 +71,43 @@ class RequestService:
         if not guild:
             raise GuildNotFoundException
         
-        if await self.cache.check_request(tag, user_id):
+        if guild.is_full:
+            raise GuildIsFullException
+        
+        check = await self.cache.check_request(tag, user_id)
+        if check:
             RequestAlreadyExistException
         
         await self.cache.add_request(tag, user_id)
     
     
     async def cancel_request(self, tag: str, guild_user_id: int, user_id: int) -> None:
-        self.validate_guild_member(tag, guild_user_id)
+        await self.validate_guild_member(tag, guild_user_id)
         
         if not await self.cache.check_request(tag, user_id):
             RequestNotFoundException
         
         try:
-            member = await self.member_service.get_user_by_id(user_id)
+            await self.member_service.get_user_by_id(user_id)
+            raise MemberAlreadyInGuildException
         except MemberNotFoundException:
             pass
-        if member:
-            raise MemberAlreadyInGuildException
         
         await self.cache.remove_request(tag, user_id)
     
     
     async def apply_request(self, tag: str, guild_user_id: int, user_id: int) -> MemberResponse:
-        self.validate_guild_member(tag, guild_user_id)
+        await self.validate_guild_member(tag, guild_user_id)
         
         if not await self.cache.check_request(tag, user_id):
             RequestNotFoundException
         
         try:
-            member = await self.member_service.get_user_by_id(user_id)
+            await self.member_service.get_user_by_id(user_id)
+            raise MemberAlreadyInGuildException
         except MemberNotFoundException:
             pass
-        if member:
-            raise MemberAlreadyInGuildException
         
         await self.cache.remove_request(tag, user_id)
         
-        self.member_service.add_member(tag, guild_user_id, AddMemberRequest(user_id))
+        await self.member_service.add_member(tag, guild_user_id, AddMemberRequest(user_id=user_id, user_name=None))

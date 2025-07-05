@@ -1,28 +1,28 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from api.v1.guild import router as guild
-from api.v1.member import router as member
-from api.v1.chat import router as chat
-from api.v1.guilds_war.routers import router as guild_war_router
-from api.v1.guild_request import router as guild_request
+from api.v1 import router as v1
 
 from settings import settings
+
+from db.database import init_db
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
 
 
 app = FastAPI(
     title=settings.project.title,
     description=settings.project.description,
     version=settings.project.release_version,
-    debug=settings.debug
+    debug=settings.debug,
+    lifespan=lifespan
 )
 
-app.include_router(guild, prefix='/api/v1/guild', tags=['guild'])
-app.include_router(member, prefix='/api/v1/member', tags=['member'])
-app.include_router(chat, prefix="/api/v1", tags=["chat"])
-app.include_router(guild_war_router, prefix="/api/v1", tags=["Guilds War"])
-
-
+app.include_router(v1, tags=['v1'])
 
 # не много кастомизируем наш Swagger для документирования ws эндпоинта
 def custom_openapi():
@@ -74,5 +74,3 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi
-
-app.include_router(guild_request, prefix='api/v1/request', tags='guild request')

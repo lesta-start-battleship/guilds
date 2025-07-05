@@ -10,7 +10,7 @@ class PermissionRepository:
         self.session = session
         
     async def get_by_id(self, permission_id: int) -> Optional[Permission]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Permission).
             where(Permission.id == permission_id)
             )
@@ -18,7 +18,7 @@ class PermissionRepository:
         return result.scalar_one_or_none()
     
     async def get_by_title(self, title: str) -> Optional[Permission]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Permission).
             where(Permission.permission == title)
             )
@@ -26,7 +26,7 @@ class PermissionRepository:
         return result.scalar_one_or_none()
     
     async def get_permissions(self) -> List[Permission]:
-        result = self.session.execute(
+        result = await self.session.execute(
             select(Permission)
             )
         
