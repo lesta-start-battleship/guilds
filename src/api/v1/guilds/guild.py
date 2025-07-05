@@ -11,8 +11,8 @@ from dependencies.services import get_guild_service
 from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException, GuildAlreadyExistException
 from exceptions.member import MemberIsNotOwnerException, MemberAlreadyInGuildException
 
-from api.responses.guild import guild_not_found, guild_already_exists, uncorrect_guild_tag
-from api.responses.member import member_already_in_guild, member_is_not_owner
+from .responses.guild import guild_not_found, guild_already_exists, uncorrect_guild_tag
+from .responses.member import member_already_in_guild, member_is_not_owner
 
 router = APIRouter()
 
