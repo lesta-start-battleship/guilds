@@ -1,7 +1,8 @@
 import os
-
+from enum import Enum
 from pydantic import BaseModel, Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from types import SimpleNamespace
 
 from dotenv import load_dotenv
 
@@ -9,6 +10,12 @@ load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 MONGO_DATABASE_URL = os.getenv("MONGO_DB_CONNECTION_URI")
+
+KAFKA_BOOTSTRAP_SERVERS = "37.9.53.228:9092"
+
+
+class KafkaTopics:
+    guild_war_confirm = "guild_war_confirm"
 
 
 class Project(BaseModel):

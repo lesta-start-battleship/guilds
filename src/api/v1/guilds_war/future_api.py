@@ -6,14 +6,6 @@ from typing import Dict, List
 router = APIRouter()
 
 
-# Отменить запрос на войну вручную
-@router.post("/cancel")
-async def cancel_war():
-    return {
-        "status": "cancelled",
-        "message": f"Guild  cancelled the war request"
-    }
-
 # Завершение войны (заглушка)
 @router.post("/finish")
 async def finish_war():

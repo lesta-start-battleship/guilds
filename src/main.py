@@ -1,21 +1,41 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from fastapi.openapi.utils import get_openapi
-
+from aiokafka import AIOKafkaProducer
 from api.v1.start_endpoints import router as start
 from api.v1.guild import router as guild
 from api.v1.member import router as member
 from api.v1.chat import router as chat
 from api.v1.guilds_war.routers import router as guild_war_router
 
-from settings import settings
+from settings import settings, KAFKA_BOOTSTRAP_SERVERS
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Создание Kafka producer и сохранение в app.state
+    producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
+    await producer.start()
+    print("Kafka producer started")
+    app.state.producer = producer
+
+    # Запуск приложения
+    yield
+
+    # Завершение работы продюсера
+    await app.state.producer.stop()
+    print("Kafka producer stopped")
 
 
 app = FastAPI(
     title=settings.project.title,
     description=settings.project.description,
     version=settings.project.release_version,
-    debug=settings.debug
+    debug=settings.debug,
+    lifespan=lifespan
 )
+
+
 
 app.include_router(start, prefix="/api/v1", tags=["old"])
 app.include_router(guild, prefix='/api/v1/guild', tags=['guild'])
