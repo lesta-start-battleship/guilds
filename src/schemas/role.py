@@ -1,11 +1,9 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Set
 
 class RoleRequest(BaseModel):
     title: str
-    edit: Optional[bool]
-    balance: Optional[bool]
-    owner: Optional[bool]
+    permissions: Set[str]
 
 class RoleResponse(RoleRequest):
     id: int

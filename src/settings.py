@@ -2,7 +2,6 @@ import os
 from enum import Enum
 from pydantic import BaseModel, Field, PostgresDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from types import SimpleNamespace
 
 from dotenv import load_dotenv
 
@@ -10,13 +9,13 @@ load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 MONGO_DATABASE_URL = os.getenv("MONGO_DB_CONNECTION_URI")
-
 KAFKA_BOOTSTRAP_SERVERS = "37.9.53.228:9092"
 
 
 class KafkaTopics:
     guild_war_confirm = "guild_war_confirm"
 
+REDIS_URL = os.getenv('REDIS_URL')
 
 class Project(BaseModel):
     """
@@ -53,10 +52,14 @@ class Settings(BaseSettings):
     # secret_key: str = Field(default=os.getenv("SECRET_KEY"))
     # algorithm: str = Field(default=os.getenv("ALGORITHM"))
     # access_token_expire_minutes: int = Field(default=os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
-    redis_url: str = Field(default='redis://localhost:6379')
+    redis_url: str = Field(default=REDIS_URL)
     
     max_members: int = Field(default=50)
     mongo_db: str = Field(default=MONGO_DATABASE_URL)
+    min_members: int = Field(default=3)
+    
+    tag_min_length: int = Field(default=3)
+    tag_max_length: int = Field(default=7)
 
     model_config = SettingsConfigDict(
         env_file=".env",

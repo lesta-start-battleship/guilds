@@ -4,7 +4,7 @@ from .declare_war import router as declare_war
 from .confirm_war import router as confirm_war
 from .cancel_war import router as cancel_war
 
-router = APIRouter(prefix="/guild/war")
+router = APIRouter()
 
 router.include_router(declare_war)
 router.include_router(confirm_war)

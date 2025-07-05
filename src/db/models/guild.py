@@ -1,6 +1,9 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, func, Boolean
+from typing import List
+from enum import Enum
 
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, func, Boolean, Enum as SqlEnum
+from sqlalchemy.orm import relationship, mapped_column, Mapped
+
 from db.database import Base
 
 
@@ -23,13 +26,43 @@ class Role(Base):
     __tablename__ = "roles"
 
     id = Column(Integer, primary_key=True, index=False)
-
-    edit = Column(Boolean)
-    owner = Column(Boolean)
-
     title = Column(String, index=False)
 
     members = relationship("Member", back_populates="role")
+    
+    permissions: Mapped[List['Permission']] = relationship(
+        'Permission',
+        secondary='role_permission',
+        back_populates='roles'
+    )
+
+
+class EnumPermissions(Enum):
+    owner = 'owner'
+    invite_members = 'invite_members'
+    kick_members = 'kick_members'
+    promote_members = 'promote_members'
+    wars = 'wars'
+
+
+class Permission(Base):
+    __tablename__ = 'permissions'
+    
+    id = Column(Integer, primary_key=True, index=False)
+    permission = Column(SqlEnum(EnumPermissions, name='permission'), nullable=False)
+
+    roles: Mapped[List['Role']] = relationship(
+        'Role',
+        secondary='role_permission',
+        back_populates='permissions'
+    )
+    
+
+class RolePermission(Base):
+    __tablename__ = 'role_permission'
+    
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'), primary_key=True)
+    permission_id: Mapped[int] = mapped_column(ForeignKey('permissions.id'), primary_key=True)
 
 
 class Member(Base):
@@ -39,7 +72,8 @@ class Member(Base):
     user_id = Column(Integer, index=True)
 
     guild_id = Column(Integer, ForeignKey("guilds.id"))
-    role_id = Column(Integer, ForeignKey("roles.id"), default=0)
+    guild_tag = Column(String)
+    role_id = Column(Integer, ForeignKey("roles.id"))
 
     user_name = Column(String, unique=True, index=True, nullable=True)
 
