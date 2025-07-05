@@ -12,9 +12,9 @@ from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException
 from exceptions.member import MemberNotHavePermissionException, MemberNotFoundException, MemberInOtherGuildException
 from exceptions.role import RoleNotFoundException
 
-from api.responses.guild import guild_not_found, uncorrect_guild_tag
-from api.responses.member import member_is_not_owner, member_not_found, member_in_other_guild, member_not_have_permissoin
-from api.responses.role import role_not_found
+from .responses.guild import guild_not_found, uncorrect_guild_tag
+from .responses.member import member_is_not_owner, member_not_found, member_in_other_guild, member_not_have_permissoin
+from .responses.role import role_not_found
 
 router = APIRouter()
 

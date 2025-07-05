@@ -13,9 +13,9 @@ from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException,
 from exceptions.member import MemberAlreadyInGuildException, MemberNotHavePermissionException, MemberNotFoundException, MemberInOtherGuildException
 from exceptions.guild_request import RequestAlreadyExistException, RequestNotFoundException
 
-from api.responses.guild import guild_not_found, uncorrect_guild_tag, guild_is_full
-from api.responses.member import member_already_in_guild, member_not_found, member_not_have_permissoin
-from api.responses.guild_request import request_already_exists, request_not_found
+from .responses.guild import guild_not_found, uncorrect_guild_tag, guild_is_full
+from .responses.member import member_already_in_guild, member_not_found, member_not_have_permissoin
+from .responses.guild_request import request_already_exists, request_not_found
 
 router = APIRouter()
 
