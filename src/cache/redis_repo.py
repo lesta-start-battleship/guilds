@@ -3,7 +3,7 @@ from datetime import datetime, UTC
 
 import redis.asyncio as redis
 
-request_key = f'request:guild:{0}:user:{1}'
+request_key = 'request:guild:{tag}:user:{user_id}'
 ttl = 24 * 60 * 60
 
 class RedisRepository:
@@ -14,22 +14,23 @@ class RedisRepository:
         requests = []
         cursor = 0
         while True:
-            cursor, keys = await self.redis.scan(cursor=cursor, match=request_key.format(tag, '*'))
+            cursor, keys = await self.redis.scan(cursor=cursor, match=request_key.format(tag=tag, user_id='*'))
             for key in keys:
-                parts = key.split(':')
+                parts = key.decode('utf-8').split(':')
                 requests.append({
                     'user_id': parts[-1],
-                    'create_at': await self.redis.get(key)
+                    'created_at': await self.redis.get(key)
                 })
             if cursor == 0:
                 break
         return requests
         
     async def add_request(self, tag: str, user_id: int):
-        await self.redis.set(key=request_key.format(tag, user_id), val=datetime.now(UTC).isoformat(), ex=ttl)
+        await self.redis.set(name=request_key.format(tag=tag, user_id=user_id), value=datetime.now(UTC).isoformat(), ex=ttl)
         
     async def remove_request(self, tag: str, user_id: int):
-        await self.redis.delete(request_key.format(tag, user_id))
+        await self.redis.delete(request_key.format(tag=tag, user_id=user_id))
         
     async def check_request(self, tag: str, user_id: int):
-        return await self.redis.get(request_key.format(tag, user_id)) is not None
+        check = await self.redis.get(request_key.format(tag=tag, user_id=user_id))
+        return check is not None

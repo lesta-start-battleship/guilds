@@ -73,7 +73,7 @@ class Member(Base):
 
     guild_id = Column(Integer, ForeignKey("guilds.id"))
     guild_tag = Column(String)
-    role_id = Column(Integer, ForeignKey("roles.id"), default=0)
+    role_id = Column(Integer, ForeignKey("roles.id"))
 
     user_name = Column(String, unique=True, index=True, nullable=True)
 

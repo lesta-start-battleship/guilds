@@ -24,9 +24,7 @@ def member_orm_to_dto(member: Member) -> MemberResponse:
         user_name=member.user_name,
         guild_id=member.guild_id,
         guild_tag=member.guild_tag,
-        role_id=member.role_id,
-        edit=member.role.edit,
-        owner=member.role.owner
+        role=role_orm_to_dto(member.role)
     )
     
 def role_orm_to_dto(role: Role) -> RoleResponse:
@@ -40,5 +38,5 @@ def cache_to_dto(cache: Dict[str, str]) -> RequestResponse:
     return RequestResponse(
         user_id=int(cache['user_id']),
         # user_name=cache['user_name'],
-        created_at=datetime.fromisoformat(cache['created_at'])
+        created_at=cache['created_at']
     )

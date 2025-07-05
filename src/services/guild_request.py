@@ -46,8 +46,10 @@ class RequestService:
         if not member:
             raise MemberNotFoundException
         
-        if member.guild_tag != tag or user_id != guild.owner_id or \
-        not self.permission_repo.get_by_title(EnumPermissions.invite_members) in member.role.permissions:
+        print(not EnumPermissions.invite_members.value in member.role.permissions)
+        
+        if member.guild_tag != tag and member.user_id != guild.owner_id and \
+        not EnumPermissions.invite_members.value in member.role.permissions:
             raise MemberNotHavePermissionException
     
     
@@ -76,7 +78,7 @@ class RequestService:
         
         check = await self.cache.check_request(tag, user_id)
         if check:
-            RequestAlreadyExistException
+            raise RequestAlreadyExistException
         
         await self.cache.add_request(tag, user_id)
     
@@ -84,8 +86,9 @@ class RequestService:
     async def cancel_request(self, tag: str, guild_user_id: int, user_id: int) -> None:
         await self.validate_guild_member(tag, guild_user_id)
         
-        if not await self.cache.check_request(tag, user_id):
-            RequestNotFoundException
+        check = await self.cache.check_request(tag, user_id)
+        if not check:
+            raise RequestNotFoundException
         
         try:
             await self.member_service.get_user_by_id(user_id)
@@ -99,8 +102,9 @@ class RequestService:
     async def apply_request(self, tag: str, guild_user_id: int, user_id: int) -> MemberResponse:
         await self.validate_guild_member(tag, guild_user_id)
         
-        if not await self.cache.check_request(tag, user_id):
-            RequestNotFoundException
+        check = await self.cache.check_request(tag, user_id)
+        if not check:
+            raise RequestNotFoundException
         
         try:
             await self.member_service.get_user_by_id(user_id)

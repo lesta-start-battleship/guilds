@@ -64,7 +64,7 @@ async def delete_member(
     member_service: MemberService = Depends(get_member_service)
     ):
     try:
-        member_service.delete_member(tag, guild_member_id, user_id)
+        await member_service.delete_member(tag, guild_member_id, user_id)
         return Response(
             error_code=status.HTTP_200_OK
         )
@@ -80,10 +80,10 @@ async def delete_member(
         return member_not_have_permissoin
 
 
-@router.delete('/{tag}/exit', response_model=MessageResponse)
+@router.delete('/{tag}/exit/{user_id}', response_model=MessageResponse)
 async def exit_from_guild(
-    tag: Annotated[int, Path(..., description='Guild tag')],
-    user_id: int,
+    tag: Annotated[str, Path(..., description='Guild tag')],
+    user_id: Annotated[int, Path(..., description='User ID')],
     member_service: MemberService = Depends(get_member_service)
     ):
     try:
@@ -96,7 +96,7 @@ async def exit_from_guild(
     except GuildNotFoundException:
         return guild_not_found
     except MemberNotFoundException:
-        return member_is_not_owner
+        return member_not_found
     except MemberInOtherGuildException:
         return member_in_other_guild
     except MemberNotHavePermissionException:
@@ -105,7 +105,7 @@ async def exit_from_guild(
     
 @router.patch('/{tag}/{user_id}', response_model=Response[MemberResponse])
 async def edit_member(
-    tag: Annotated[int, Path(..., description='Guild tag')],
+    tag: Annotated[str, Path(..., description='Guild tag')],
     guild_member_id: int,
     user_id: Annotated[int, Path(..., description='User ID')],
     edit_form: EditMemberRequest,

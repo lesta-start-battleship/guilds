@@ -60,8 +60,9 @@ class MemberService:
         if not guild_member:
             raise MemberNotFoundException
         
-        if guild_member.guild_tag != tag or guild_user_id != guild.owner_id or \
-        not self.permission_repo.get_by_title(EnumPermissions.kick_members) in guild_member.role.permissions:
+        permission = await self.permission_repo.get_by_title(EnumPermissions.kick_members)
+        if guild_member.guild_tag != tag and guild_user_id != user_id and guild_user_id != guild.owner_id and \
+        not any(permission.id == p.id for p in guild_member.role.permissions):
             raise MemberNotHavePermissionException
             
         member = await self.member_repo.get_by_user_id(user_id)
@@ -71,7 +72,7 @@ class MemberService:
         if member.guild_tag != tag:
             raise MemberInOtherGuildException
         
-        if member.id == guild.owner_id:
+        if member.user_id == guild.owner_id:
             raise MemberNotHavePermissionException
         
         members_count = await self.member_repo.get_members_count(member.guild_tag)
@@ -81,6 +82,7 @@ class MemberService:
             self.guild_repo.edit(tag, is_active=False)
         
         await self.member_repo.delete_member(user_id)
+        return
     
     
     async def exit_from_guild(self, tag: str, user_id: int) -> None:
@@ -98,7 +100,7 @@ class MemberService:
         if member.guild_tag != tag:
             raise MemberInOtherGuildException
         
-        if member.id == guild.owner_id:
+        if member.user_id == guild.owner_id:
             raise MemberNotHavePermissionException
         
         members_count = await self.member_repo.get_members_count(member.guild_tag)
@@ -108,6 +110,7 @@ class MemberService:
             self.guild_repo.edit(tag, is_active=False)
         
         await self.member_repo.delete_member(user_id)
+        return
     
     
     async def add_member(self, tag: str, guild_user_id: int, user_form: AddMemberRequest) -> MemberResponse:
@@ -122,8 +125,9 @@ class MemberService:
         if not guild_member:
             raise MemberNotFoundException
         
-        if guild_member.guild_tag != tag or guild_user_id != guild.owner_id or \
-        not self.permission_repo.get_by_title(EnumPermissions.invite_members) in guild_member.role.permissions:
+        permission = await self.permission_repo.get_by_title(EnumPermissions.invite_members)
+        if guild_member.guild_tag != tag and guild_user_id != guild.owner_id and \
+        not any(permission.id == p.id for p in guild_member.role.permissions):
             raise MemberNotHavePermissionException
         
         if await self.member_repo.get_by_user_id(user_form.user_id):
@@ -132,7 +136,8 @@ class MemberService:
         if await self.member_repo.get_members_count(tag) == settings.max_members:
             raise GuildIsFullException
         
-        new_member = await self.member_repo.add_member(guild.id, guild.tag, user_form.user_id, user_form.user_name)
+        min_role = await self.role_repo.get_by_title('cabin_boy')
+        new_member = await self.member_repo.add_member(guild.id, guild.tag, user_form.user_id, user_form.user_name, min_role.id)
         
         members_count = await self.member_repo.get_members_count(tag)
         if members_count == settings.max_members:
@@ -168,12 +173,18 @@ class MemberService:
         if not guild_member:
             raise MemberNotFoundException
         
-        if guild_member.guild_tag != tag or guild_user_id == user_id or guild_user_id != guild.owner_id or \
-        not self.permission_repo.get_by_title(EnumPermissions.promote_members) in guild_member.role.permissions:
+        permission = await self.permission_repo.get_by_title(EnumPermissions.promote_members)
+        if user_id == guild.owner_id or guild_member.guild_tag != tag \
+        and user_id !=guild.owner_id and guild_user_id != guild.owner_id and \
+        not any(permission.id == p.id for p in guild_member.role.permissions):
             raise MemberNotHavePermissionException
         
-        if self.role_repo.get_by_id(role_id):
+        role =await self.role_repo.get_by_id(role_id)
+        if not role:
             raise RoleNotFoundException
+        
+        if role.title == 'owner':
+            raise MemberNotHavePermissionException
         
         new_member = await self.member_repo.edit(user_id, role_id=role_id)
         return member_orm_to_dto(new_member)

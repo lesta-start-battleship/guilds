@@ -14,7 +14,8 @@ class RoleRepository:
     async def get_by_id(self, role_id: int) -> Optional[Role]:
         result = await self.session.execute(
             select(Role).
-            options(selectinload(Role.permissions)).
+            options(
+                selectinload(Role.permissions)).
             where(Role.id == role_id)
             )
         
@@ -75,6 +76,8 @@ class RoleRepository:
             
             await self.session.flush([role])
             await self.session.commit()
+            
+            await self.session.refresh(role)
             return role
     
     

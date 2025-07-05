@@ -86,5 +86,6 @@ class GuildRepository:
                 
             await self.session.flush([guild])
             await self.session.commit()
-            
+        
+        await self.session.refresh(guild)
         return guild
