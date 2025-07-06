@@ -6,6 +6,6 @@ from .chat.routers import router as chat
 
 router = APIRouter(prefix='/api/v1')
 
-router.include_router(chat)
+# router.include_router(chat)
 router.include_router(war)
 router.include_router(guilds)
