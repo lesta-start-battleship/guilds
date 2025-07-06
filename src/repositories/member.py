@@ -14,7 +14,8 @@ class MemberRepository:
         result = await self.session.execute(
             select(Member).
             options(
-                selectinload(Member.role).selectinload(Role.permissions)
+                selectinload(Member.role).selectinload(Role.permissions),
+                selectinload(Member.role).selectinload(Role.promote_roles)
             ).
             where(Member.user_id == user_id)
         )
@@ -26,7 +27,8 @@ class MemberRepository:
         result = await self.session.execute(
             select(Member).
             options(
-                selectinload(Member.role).selectinload(Role.permissions)
+                selectinload(Member.role).selectinload(Role.permissions),
+                selectinload(Member.role).selectinload(Role.promote_roles)
             ).
             where(Member.guild_tag == guild_tag).
             limit(limit=limit).
@@ -58,10 +60,10 @@ class MemberRepository:
         await self.session.commit()
         return member
 
+
     async def delete_member(self, user_id: int) -> bool:
         member = await self.get_by_user_id(user_id)
         if member:
-            print('pipao')
             await self.session.delete(member)
             await self.session.commit()
             return True

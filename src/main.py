@@ -15,6 +15,7 @@ from api.v1 import router as v1
 from dependencies.chat import mongo_repo
 from services.chat_service import get_member
 from settings import settings, KAFKA_BOOTSTRAP_SERVERS
+from db.database import get_db
 from utils.chat_util import manager
 
 

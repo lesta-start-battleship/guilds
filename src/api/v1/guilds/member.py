@@ -73,7 +73,7 @@ async def delete_member(
     except GuildNotFoundException:
         return guild_not_found
     except MemberNotFoundException:
-        return member_is_not_owner
+        return member_not_found
     except MemberInOtherGuildException:
         return member_in_other_guild
     except MemberNotHavePermissionException:

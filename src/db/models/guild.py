@@ -1,7 +1,7 @@
 from typing import List
 from enum import Enum
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, DateTime, func, Boolean, Enum as SqlEnum
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Text, DateTime, func, Boolean, Enum as SqlEnum
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 
 from db.database import Base
@@ -22,6 +22,14 @@ class Guild(Base):
     members = relationship("Member", back_populates="guild", cascade="all, delete-orphan")
 
 
+roles_promotes_table = Table(
+    'roles_promotes',
+    Base.metadata,
+    Column('role_id', ForeignKey('roles.id'), primary_key=True),
+    Column('promote_role_id', ForeignKey('roles.id'), primary_key=True)
+)
+
+
 class Role(Base):
     __tablename__ = "roles"
 
@@ -34,6 +42,22 @@ class Role(Base):
         'Permission',
         secondary='role_permission',
         back_populates='roles'
+    )
+    
+    promote_roles = relationship(
+        'Role',
+        secondary=roles_promotes_table,
+        primaryjoin=id == roles_promotes_table.c.role_id,
+        secondaryjoin=id == roles_promotes_table.c.promote_role_id,
+        back_populates='promoted_by_roles'
+    )
+    
+    promoted_by_roles = relationship(
+        'Role',
+        secondary=roles_promotes_table,
+        primaryjoin=id == roles_promotes_table.c.promote_role_id,
+        secondaryjoin=id == roles_promotes_table.c.role_id,
+        back_populates='promote_roles'
     )
 
 

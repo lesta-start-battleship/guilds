@@ -15,7 +15,9 @@ class RoleRepository:
         result = await self.session.execute(
             select(Role).
             options(
-                selectinload(Role.permissions)).
+                selectinload(Role.permissions),
+                selectinload(Role.promote_roles)
+            ).
             where(Role.id == role_id)
             )
         
@@ -25,7 +27,10 @@ class RoleRepository:
     async def get_by_title(self, title: str) -> Optional[Role]:
         result = await self.session.execute(
             select(Role).
-            options(selectinload(Role.permissions)).
+            options(
+                selectinload(Role.permissions),
+                selectinload(Role.promote_roles)
+            ).
             where(Role.title == title)
             )
         

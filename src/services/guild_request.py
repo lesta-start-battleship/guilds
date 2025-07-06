@@ -46,10 +46,9 @@ class RequestService:
         if not member:
             raise MemberNotFoundException
         
-        print(not EnumPermissions.invite_members.value in member.role.permissions)
-        
-        if member.guild_tag != tag and member.user_id != guild.owner_id and \
-        not EnumPermissions.invite_members.value in member.role.permissions:
+        if member.guild_tag != tag or \
+        (member.user_id != guild.owner_id and \
+        not EnumPermissions.invite_members.value in member.role.permissions):
             raise MemberNotHavePermissionException
     
     
@@ -111,6 +110,10 @@ class RequestService:
             raise MemberAlreadyInGuildException
         except MemberNotFoundException:
             pass
+        
+        guild = await self.guild_repo.get_by_tag(tag)
+        if guild.is_full:
+            raise GuildIsFullException
         
         await self.cache.remove_request(tag, user_id)
         
