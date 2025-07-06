@@ -4,8 +4,8 @@ from typing import Optional
 from schemas.base import BasePagination
 
 class EditGuildRequest(BaseModel):
-    title: Optional[str]
-    description: Optional[str]
+    title: Optional[str] = None
+    description: Optional[str] = None
 
 class CreateGuildRequest(EditGuildRequest):
     tag: str

@@ -21,14 +21,6 @@ async def lifespan(app: FastAPI):
     await app.state.producer.stop()
     print("Kafka producer stopped")
 
-from db.database import init_db
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    yield
-
-
 app = FastAPI(
     title=settings.project.title,
     description=settings.project.description,

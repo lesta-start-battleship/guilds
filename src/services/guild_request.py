@@ -114,4 +114,4 @@ class RequestService:
         
         await self.cache.remove_request(tag, user_id)
         
-        await self.member_service.add_member(tag, guild_user_id, AddMemberRequest(user_id=user_id, user_name=None))
+        return await self.member_service.add_member(tag, guild_user_id, AddMemberRequest(user_id=user_id, user_name=None))
