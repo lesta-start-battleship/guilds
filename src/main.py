@@ -60,7 +60,8 @@ async def guild_websocket(
         print("❌ Пользователь не найден в гильдии или не имеет доступа")
         await manager.connect_user_only(
             websocket,
-            {"error": "Доступ отказан: вы не являетесь членом этой гильдии."},
+            {"type": "error",
+            "data": "Доступ отказан: вы не являетесь членом этой гильдии."},
             close_code=1008
         )
         return
