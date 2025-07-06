@@ -34,7 +34,7 @@ class MongoChatMessage(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id")
     guild_id: int
     user_id: int
-    user_name: str
+    # user_name: str
     content: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
