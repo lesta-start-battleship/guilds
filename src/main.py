@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from api.v1 import router as v1
+from db.database import get_db
 from dependencies.chat import mongo_repo
 from services.chat_service import get_member
 from settings import settings, KAFKA_BOOTSTRAP_SERVERS
@@ -22,6 +23,7 @@ from utils.chat_util import manager
 async def lifespan(app: FastAPI):
     # Создание Kafka producer и сохранение в app.state
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
+
     await producer.start()
     print("Kafka producer started")
     app.state.producer = producer
@@ -54,7 +56,6 @@ async def guild_websocket(
     print(f"📡 Подключение: guild_id={guild_id}, user_id={user_id}")
 
     member = await get_member(db, user_id, guild_id)
-
     if not member:
         print("❌ Пользователь не найден в гильдии или не имеет доступа")
         await manager.connect_user_only(

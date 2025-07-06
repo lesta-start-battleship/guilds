@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     Настройки проекта.
     """
 
+
     #: режим отладки
     debug: bool = Field(default=False)
     #: уровень логирования
