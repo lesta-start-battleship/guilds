@@ -39,3 +39,5 @@ pytest-asyncio
 httpx
 
 aiokafka
+
+redis[async]
