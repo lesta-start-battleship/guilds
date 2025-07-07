@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
 from dependencies.chat import mongo_repo
 from services.chat_service import get_member
-from utils.chat_util import manager
+from utils.chat_util import manager, enrich_messages_with_usernames, get_username_by_id
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ async def guild_websocket(
         await manager.connect_user_only(
             websocket,
             {"type": "error",
-            "data": ["Доступ отказан: вы не являетесь членом этой гильдии."]},
+             "data": ["Доступ отказан: вы не являетесь членом этой гильдии."]},
             close_code=1008
         )
         return
@@ -40,14 +40,15 @@ async def guild_websocket(
     await manager.connect(guild_id, websocket)
 
     try:
-        history = await mongo_repo.get_messages_by_guild(guild_id)
-        # todo добавить пагинацию и написать функуию которая будет добавлять username в каждое сообщение
-        await asyncio.sleep(0.1)
+        # 👇 по умолчанию 10 последних сообщений
+        history = await mongo_repo.get_messages_by_guild(guild_id, skip=0, limit=2)
+        enriched = await enrich_messages_with_usernames(db, history)
         await websocket.send_json({
             "type": "history",
-            "data": jsonable_encoder(history)
+            "data": enriched,
+            "meta": {"skip": 0, "limit": 10, "count": len(enriched)}
         })
-        print(f"📜 История сообщений отправлена (кол-во: {len(history)})")
+        print(f"📜 История сообщений отправлена (кол-во: {len(enriched)})")
     except Exception as e:
         print("❌ Ошибка при загрузке истории сообщений:", e)
 
@@ -56,29 +57,52 @@ async def guild_websocket(
             data: Any = await websocket.receive_json()
             print(f"📨 Получено сообщение от {user_id}: {data}")
 
-            # Пример обогащения сообщения
+            msg_type = data.get("type")
+            payload = data.get("payload", {})
+
+            if msg_type == "history":
+                skip = int(payload.get("skip", 0))
+                limit = int(payload.get("limit", 10))
+                try:
+                    history = await mongo_repo.get_messages_by_guild(guild_id, skip=skip, limit=limit)
+                    enriched = await enrich_messages_with_usernames(db, history)
+                    await websocket.send_json({
+                        "type": "history",
+                        "data": enriched,
+                        "meta": {
+                            "skip": skip,
+                            "limit": limit,
+                            "count": len(enriched)
+                        }
+                    })
+                    print(f"📜 История (skip={skip}, limit={limit}) отправлена")
+                except Exception as e:
+                    print("❌ Ошибка при загрузке истории:", e)
+                continue
+
+            # иначе — обычное сообщение
             message = {
                 "user_id": member.user_id,
                 "guild_id": member.guild_id,
-                # "user_name": data["user_name"],
-                "content": data.get("content", ""),
+                "content": payload.get("content", "")
             }
 
             try:
                 saved = await mongo_repo.save_message(message)
-                print("✅ Сохранено сообщение:", saved)
-                # todo здесь так же нужно будет использовать функцию которая подменяет имя пользователя в ззависимости от ID
-                await manager.broadcast(guild_id, jsonable_encoder(saved))
+                username = await get_username_by_id(db, saved.user_id)
+                outgoing = jsonable_encoder(saved)
+                outgoing["username"] = username
+                await manager.broadcast(guild_id, outgoing)
                 print("📢 Сообщение разослано всем подключённым клиентам")
             except Exception as e:
                 print("❌ Ошибка при сохранении/рассылке сообщения:", e)
 
-
     except WebSocketDisconnect:
         print("🔌 Клиент отключился")
     except Exception as e:
-        print("❌ Общая ошибка в обработчике WebSocket:", e)
+        print("❌ Общая ошибка в WebSocket:", e)
     finally:
         manager.disconnect(guild_id, websocket)
         print("🧹 Соединение удалено из менеджера")
+
 
