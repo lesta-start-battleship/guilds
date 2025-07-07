@@ -1,29 +1,16 @@
-import asyncio
-from contextlib import asynccontextmanager
-from typing import Any
-
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from fastapi.encoders import jsonable_encoder
 from fastapi.openapi.utils import get_openapi
 from aiokafka import AIOKafkaProducer
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from api.v1 import router as v1
-from db.database import get_db
-from dependencies.chat import mongo_repo
-from services.chat_service import get_member
-from settings import settings, KAFKA_BOOTSTRAP_SERVERS
-from db.database import get_db
-from utils.chat_util import manager
-
+from settings import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Создание Kafka producer и сохранение в app.state
-    producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
+    producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
 
     await producer.start()
     print("Kafka producer started")

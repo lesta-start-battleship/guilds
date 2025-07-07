@@ -50,14 +50,13 @@ class Settings(BaseSettings):
         default=SQLALCHEMY_DATABASE_URL
     )
 
-    # secret_key: str = Field(default=os.getenv("SECRET_KEY"))
-    # algorithm: str = Field(default=os.getenv("ALGORITHM"))
-    # access_token_expire_minutes: int = Field(default=os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
     redis_url: str = Field(default=REDIS_URL)
-    
+    kafka_service: str = Field(default=KAFKA_BOOTSTRAP_SERVERS)
+
     max_members: int = Field(default=50)
     mongo_db: str = Field(default=MONGO_DATABASE_URL)
     min_members: int = Field(default=3)
+
     
     tag_min_length: int = Field(default=3)
     tag_max_length: int = Field(default=7)
