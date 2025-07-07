@@ -10,6 +10,19 @@ ttl = 24 * 60 * 60
 class RedisRepository:
     def __init__(self, redis_url: str):
         self.redis = redis.from_url(redis_url)
+        self.redis_url = redis_url
+
+    async def ping(self) -> bool:
+        try:
+            print(self.redis_url)
+            response = await self.redis.ping()
+            print(response)
+            print("Good")
+            return response
+        except Exception:
+            print(self.redis_url)
+            print("Bad")
+            return False
 
     async def get_requests(self, tag: str) -> List[Dict[str, str]]:
         requests = []

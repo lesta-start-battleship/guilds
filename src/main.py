@@ -9,6 +9,7 @@ from settings import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     # Создание Kafka producer и сохранение в app.state
     producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
 
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
     await app.state.producer.stop()
     print("Kafka producer stopped")
 
+
 app = FastAPI(
     title=settings.project.title,
     description=settings.project.description,
@@ -32,6 +34,7 @@ app = FastAPI(
 )
 
 app.include_router(v1)
+
 
 def custom_openapi():
     if app.openapi_schema:
