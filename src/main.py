@@ -8,6 +8,7 @@ from settings import settings, KAFKA_BOOTSTRAP_SERVERS
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     # Создание Kafka producer и сохранение в app.state
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
     await producer.start()
@@ -21,12 +22,6 @@ async def lifespan(app: FastAPI):
     await app.state.producer.stop()
     print("Kafka producer stopped")
 
-from db.database import init_db
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    yield
 
 
 app = FastAPI(
@@ -38,7 +33,6 @@ app = FastAPI(
 )
 
 app.include_router(v1)
-
 
 
 # не много кастомизируем наш Swagger для документирования ws эндпоинта
