@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 
 from settings import settings
 
-engine = create_async_engine(str(settings.database_url), echo=True)
+engine = create_async_engine(str(settings.database_url), echo=False)
 
 class Base(DeclarativeBase):
     pass
