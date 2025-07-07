@@ -58,7 +58,7 @@ class RequestService:
         return [cache_to_dto(r) for r in requests]
     
     
-    async def add_request(self, tag: str, user_id: int) -> None:
+    async def add_request(self, tag: str, user_id: int, user_name: str) -> None:
         try:
             await self.member_service.get_user_by_id(user_id)
             raise MemberAlreadyInGuildException
@@ -79,7 +79,7 @@ class RequestService:
         if check:
             raise RequestAlreadyExistException
         
-        await self.cache.add_request(tag, user_id)
+        await self.cache.add_request(tag, user_id, user_name)
     
     
     async def cancel_request(self, tag: str, guild_user_id: int, user_id: int) -> None:
@@ -115,6 +115,15 @@ class RequestService:
         if guild.is_full:
             raise GuildIsFullException
         
+        request = await self.cache.get_request(tag, user_id)
+        member =  await self.member_service.add_member(tag, guild_user_id, user_id, request['user_name'])
         await self.cache.remove_request(tag, user_id)
-        
-        return await self.member_service.add_member(tag, guild_user_id, AddMemberRequest(user_id=user_id, user_name=None))
+        return member
+    
+    
+    async def on_user_deleted(self, user_id: int) -> bool:
+        ...
+    
+    
+    async def on_username_changed(self, user_id: int, username: str) -> bool:
+        ...

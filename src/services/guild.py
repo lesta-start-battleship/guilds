@@ -100,3 +100,9 @@ class GuildService:
             raise MemberIsNotOwnerException
         
         await self.guild_repo.delete(tag)
+        
+    
+    async def on_user_deleted(self, user_id: int) -> bool:
+        guild = await self.guild_repo.get_by_owner_id(user_id)
+        if guild:
+            return await self.guild_repo.delete(guild.tag)

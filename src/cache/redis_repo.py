@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List
 from datetime import datetime, UTC
 
@@ -9,6 +10,19 @@ ttl = 24 * 60 * 60
 class RedisRepository:
     def __init__(self, redis_url: str):
         self.redis = redis.from_url(redis_url)
+        self.redis_url = redis_url
+
+    async def ping(self) -> bool:
+        try:
+            print(self.redis_url)
+            response = await self.redis.ping()
+            print(response)
+            print("Good")
+            return response
+        except Exception:
+            print(self.redis_url)
+            print("Bad")
+            return False
 
     async def get_requests(self, tag: str) -> List[Dict[str, str]]:
         requests = []
@@ -17,20 +31,31 @@ class RedisRepository:
             cursor, keys = await self.redis.scan(cursor=cursor, match=request_key.format(tag=tag, user_id='*'))
             for key in keys:
                 parts = key.decode('utf-8').split(':')
-                requests.append({
-                    'user_id': parts[-1],
-                    'created_at': await self.redis.get(key)
-                })
+                requests.append(await self.get_request(tag, parts[-1]))
             if cursor == 0:
                 break
         return requests
-        
-    async def add_request(self, tag: str, user_id: int):
-        await self.redis.set(name=request_key.format(tag=tag, user_id=user_id), value=datetime.now(UTC).isoformat(), ex=ttl)
-        
+    
+    async def get_request(self, tag: str, user_id: int) -> Dict[str, str]:
+        raw_value = await self.redis.get(request_key.format(tag=tag, user_id=user_id))
+        value = json.loads(raw_value)
+        return {
+            'user_id': user_id,
+            'user_name': value['user_name'],
+            'created_at': value['created_at']
+        }
+    
+    async def add_request(self, tag: str, user_id: int, user_name):
+        value = {'created_at': datetime.now(UTC).isoformat(), 'user_name': user_name}
+        await self.redis.set(
+            name=request_key.format(tag=tag, user_id=user_id),
+            value=json.dumps(value).encode('utf-8'),
+            ex=ttl
+        )
+    
     async def remove_request(self, tag: str, user_id: int):
         await self.redis.delete(request_key.format(tag=tag, user_id=user_id))
-        
+    
     async def check_request(self, tag: str, user_id: int):
         check = await self.redis.get(request_key.format(tag=tag, user_id=user_id))
         return check is not None

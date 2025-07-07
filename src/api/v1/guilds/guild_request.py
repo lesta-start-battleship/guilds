@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Path, status, Depends
 
 from schemas.base import MessageResponse, Response
-from schemas.member import MemberResponse
+from schemas.member import AddMemberRequest, MemberResponse
 from schemas.guild_request import RequestPagination
 
 from dependencies.services import get_request_service
@@ -49,10 +49,11 @@ async def get_requests(
 async def send_requests(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: int,
+    user_form: AddMemberRequest,
     request_service: RequestService = Depends(get_request_service)
     ):
     try:
-        await request_service.add_request(tag, user_id)
+        await request_service.add_request(tag, user_id, user_form.user_name)
         return MessageResponse(
             error_code=status.HTTP_201_CREATED
         )

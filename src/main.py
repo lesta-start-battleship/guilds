@@ -7,31 +7,34 @@ from aiokafka import AIOKafkaProducer
 from api.v1 import router as v1
 from settings import settings
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # Создание Kafka producer и сохранение в app.state
-#     producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
-#
-#     await producer.start()
-#     print("Kafka producer started")
-#     app.state.producer = producer
-#
-#     # Запуск приложения
-#     yield
-#
-#     # Завершение работы продюсера
-#     await app.state.producer.stop()
-#     print("Kafka producer stopped")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    # Создание Kafka producer и сохранение в app.state
+    producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
+
+    await producer.start()
+    print("Kafka producer started")
+    app.state.producer = producer
+
+    # Запуск приложения
+    yield
+
+    # Завершение работы продюсера
+    await app.state.producer.stop()
+    print("Kafka producer stopped")
+
 
 app = FastAPI(
     title=settings.project.title,
     description=settings.project.description,
     version=settings.project.release_version,
     debug=settings.debug,
-    # lifespan=lifespan
+    lifespan=lifespan
 )
 
 app.include_router(v1)
+
 
 def custom_openapi():
     if app.openapi_schema:

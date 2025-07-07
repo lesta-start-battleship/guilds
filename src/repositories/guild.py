@@ -20,6 +20,15 @@ class GuildRepository:
         return result.scalar_one_or_none()
     
     
+    async def get_by_id(self, id: int) -> Optional[Guild]:
+        result = await self.session.execute(
+            select(Guild).
+            where(Guild.id == id)
+            )
+        
+        return result.scalar_one_or_none()
+    
+    
     async def get_by_owner_id(self, owner_id: int) -> Optional[Guild]:
         result = await self.session.execute(
             select(Guild).

@@ -37,6 +37,6 @@ def role_orm_to_dto(role: Role) -> RoleResponse:
 def cache_to_dto(cache: Dict[str, str]) -> RequestResponse:
     return RequestResponse(
         user_id=int(cache['user_id']),
-        # user_name=cache['user_name'],
+        user_name=cache['user_name'],
         created_at=cache['created_at']
     )

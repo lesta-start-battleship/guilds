@@ -1,25 +1,74 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import and_, or_, select, func
 from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
+import asyncio
 
+import uuid
+import json
+from aiokafka import AIOKafkaProducer
+
+from settings import KafkaTopics
+from cache.redis_instance import redis
 from db.models.guild import Guild
 from db.models.guild_war import GuildWarRequest, WarStatus
 from db.database import get_db
 
+
 from .schemas import DeclareWarRequest, DeclareWarResponse
-from .utils import check_guild_owner, advisory_lock_key
+from .utils import check_guild_owner, advisory_lock_key, send_kafka_message
 
 router = APIRouter()
+# http_bearer = HTTPBearer()
+
 
 @router.post("/declare", response_model=DeclareWarResponse)
 async def declare_war(
     data: DeclareWarRequest,
-    session: AsyncSession = Depends(get_db)
+    request: Request, 
+    session: AsyncSession = Depends(get_db),
+    # token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
+
+        # try:
+        #     pong = await redis.ping()
+        #     if not pong:
+        #         raise HTTPException(500, detail="Redis is not available")
+        # except Exception as e:
+        #     raise HTTPException(500, detail=f"Redis connection failed: {e}")
+
+        # Отправка сообщения в Kafka
+        correlation_id = str(uuid.uuid4())
+        message = {
+            "initiator_guild_id": data.initiator_guild_id,
+            "initiator_owner_id": data.initiator_owner_id,
+            "correlation_id": correlation_id
+        }
+        
+        await send_kafka_message(
+            request=request,
+            topic=KafkaTopics.initiator_guild_wants_declare_war,
+            message=message,
+        )
+
+
+        # 2. Ждём ответ из Redis
+    
+        # key = f"rage-response:{correlation_id}"
+        # rage_response = await redis.redis.blpop(key, timeout=15)
+
+        # if not rage_response:
+        #     raise HTTPException(504, "Timeout while validating rage points")
+
+        # _, value = rage_response
+        # if value != "true":
+        #     raise HTTPException(400, "Not enough rage points to declare war")
+        
+
+
         async with session.begin():  # Обеспечивает транзакционность
 
             # 🔐 Advisory Lock для защиты от гонки между двумя гильдиями
@@ -107,7 +156,7 @@ async def declare_war(
                     status_code=400,
                     detail="Target guild is already participating in an active war"
                 )
-
+            
             # 8. Создаём заявку
             new_request = GuildWarRequest(
                 initiator_guild_id=data.initiator_guild_id,
@@ -118,13 +167,22 @@ async def declare_war(
             session.add(new_request)
             await session.flush()
 
-        return DeclareWarResponse(
-            request_id=new_request.id,
-            initiator_guild_id=new_request.initiator_guild_id,
-            target_guild_id=new_request.target_guild_id,
-            status=new_request.status,
-            created_at=new_request.created_at,
+            response =  DeclareWarResponse(
+                war_id=new_request.id,
+                initiator_guild_id=new_request.initiator_guild_id,
+                target_guild_id=new_request.target_guild_id,
+                status=new_request.status,
+                created_at=new_request.created_at,
+            )
+        
+        # Отправка в Kafka
+        await send_kafka_message(
+            request=request,
+            topic=KafkaTopics.guild_war_declare,
+            message=response,
         )
+
+        return response
     
     except DBAPIError as e:
         if isinstance(e.__cause__, DeadlockDetectedError):
