@@ -46,75 +46,6 @@ app = FastAPI(
 
 app.include_router(v1)
 
-
-@app.websocket("/ws/guild/{guild_id}/{user_id}")
-async def guild_websocket(
-        guild_id: int,
-        user_id: int,
-        websocket: WebSocket,
-        db: AsyncSession = Depends(get_db)
-):
-    print(f"📡 Подключение: guild_id={guild_id}, user_id={user_id}")
-
-    member = await get_member(db, user_id, guild_id)
-    if not member:
-        print("❌ Пользователь не найден в гильдии или не имеет доступа")
-        await manager.connect_user_only(
-            websocket,
-            {"type": "error",
-            "data": ["Доступ отказан: вы не являетесь членом этой гильдии."]},
-            close_code=1008
-        )
-        return
-    print("✅ Пользователь подтверждён как участник гильдии")
-
-    await manager.connect(guild_id, websocket)
-
-    try:
-        history = await mongo_repo.get_messages_by_guild(guild_id)
-        # todo добавить пагинацию и написать функуию которая будет добавлять username в каждое сообщение
-        await asyncio.sleep(0.1)
-        await websocket.send_json({
-            "type": "history",
-            "data": jsonable_encoder(history)
-        })
-        print(f"📜 История сообщений отправлена (кол-во: {len(history)})")
-    except Exception as e:
-        print("❌ Ошибка при загрузке истории сообщений:", e)
-
-    try:
-        while True:
-            data: Any = await websocket.receive_json()
-            print(f"📨 Получено сообщение от {user_id}: {data}")
-
-            # Пример обогащения сообщения
-            message = {
-                "user_id": member.user_id,
-                "guild_id": member.guild_id,
-                # "user_name": data["user_name"],
-                "content": data.get("content", ""),
-            }
-
-            try:
-                saved = await mongo_repo.save_message(message)
-                print("✅ Сохранено сообщение:", saved)
-                # todo здесь так же нужно будет использовать функцию которая подменяет имя пользователя в ззависимости от ID
-                await manager.broadcast(guild_id, jsonable_encoder(saved))
-                print("📢 Сообщение разослано всем подключённым клиентам")
-            except Exception as e:
-                print("❌ Ошибка при сохранении/рассылке сообщения:", e)
-
-
-    except WebSocketDisconnect:
-        print("🔌 Клиент отключился")
-    except Exception as e:
-        print("❌ Общая ошибка в обработчике WebSocket:", e)
-    finally:
-        manager.disconnect(guild_id, websocket)
-        print("🧹 Соединение удалено из менеджера")
-
-
-# не много кастомизируем наш Swagger для документирования ws эндпоинта
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -126,13 +57,13 @@ def custom_openapi():
         routes=app.routes,
     )
 
-    openapi_schema["paths"]["/api/v1/ws/guild/{guild_id}/{user_id}"] = {
+    openapi_schema["paths"]["/api/v1/chat/ws/guild/{guild_id}/{user_id}"] = {
         "get": {
             "summary": "Подключение к WebSocket для гильдии и пользователя",
             "description": "Для подключения к серверу WebSocket нужно:"
                            "указать ID конкретной гильдии и пользователя. Отправьте сообщение и "
                            "получите ответ."
-                           "Пример подключения: ws://host:port/api/v1/ws/guild/1/1",
+                           "Пример подключения: ws://host:port/api/v1/chat/ws/guild/guild_id/user_id",
             "tags": ["Chat"],
             "parameters": [
                 {
