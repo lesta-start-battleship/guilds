@@ -38,6 +38,19 @@ class MemberRepository:
         return result.scalars().all()
     
     
+    async def get_list_by_guild_id(self, guild_id: int) -> List[Member]:
+        result = await self.session.execute(
+            select(Member).
+            options(
+                selectinload(Member.role).selectinload(Role.permissions),
+                selectinload(Member.role).selectinload(Role.promote_roles)
+            ).
+            where(Member.guild_id == guild_id)
+        )
+
+        return result.scalars().all()
+    
+    
     async def get_members_count(self, guild_tag: str) -> int:
         result = await self.session.execute(
             select(func.count()).select_from(Member).where(Member.guild_tag == guild_tag)
@@ -73,7 +86,7 @@ class MemberRepository:
     async def edit(
             self,
             user_id: Optional[int],
-            role_id: Optional[int],
+            role_id: Optional[int] = None,
             user_name: Optional[str] = None,
     ) -> Optional[Member]:
 

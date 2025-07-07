@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, List
 
 from fastapi import APIRouter, Path, Query, status, Depends
 
@@ -31,6 +31,21 @@ async def get_member_by_user_id(
         )
     except MemberNotFoundException:
         return member_not_found
+
+
+@router.get('/guild_id/{guild_id}', response_model=Response[List[int]])
+async def get_members_by_guild_id(
+    guild_id: Annotated[int, Path(..., description='Guild ID')],
+    member_service: MemberService = Depends(get_member_service)
+    ):
+    try:
+        members = await member_service.get_members_by_guild_id(guild_id)
+        return Response(
+            error_code=status.HTTP_200_OK,
+            value=members
+        )
+    except GuildNotFoundException:
+        return guild_not_found
     
     
 @router.get('/{tag}', response_model=Response[MemberPagination])
@@ -104,15 +119,15 @@ async def exit_from_guild(
 
     
 @router.patch('/{tag}/{user_id}', response_model=Response[MemberResponse])
-async def edit_member(
+async def change_member_role(
     tag: Annotated[str, Path(..., description='Guild tag')],
     guild_member_id: int,
     user_id: Annotated[int, Path(..., description='User ID')],
-    edit_form: EditMemberRequest,
+    role_form: EditMemberRequest,
     member_service: MemberService = Depends(get_member_service)
     ):
     try:
-        member = await member_service.edit_member(tag, guild_member_id, user_id, edit_form.role_id)
+        member = await member_service.change_member_role(tag, guild_member_id, user_id, role_form.role_id)
         return Response(
             error_code=status.HTTP_200_OK,
             value=member
