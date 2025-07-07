@@ -1,5 +1,5 @@
 import asyncio
-from logging.config import fileConfig
+from logging_config.config import fileConfig
 
 from alembic import context
 from sqlalchemy import pool
@@ -32,6 +32,9 @@ target_metadata = Base.metadata
 # ... etc.
 config.set_main_option("sqlalchemy.url", str(settings.database_url))
 
+
+section = config.config_ini_section
+config.set_section_option(section, "DATABASE_URL", str(settings.database_url))
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
