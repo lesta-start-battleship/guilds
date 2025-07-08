@@ -13,7 +13,7 @@ from infra.db.models.guild_war import GuildWarRequest, WarStatus, GuildWarReques
 from infra.db.database import get_db
 
 from .schemas import CancelWarRequest, CancelWarResponse, CancelWarMessage
-from .utils import check_guild_owner, advisory_lock_key, send_kafka_message, get_guild_owner
+from .utils import check_guild_owner, advisory_lock_key, send_kafka_message, get_guild_owner, check_guild_active
 
 router = APIRouter()
 
@@ -49,9 +49,11 @@ async def cancel_war(
             # Проверка владельца одной из гильдий
             try:
                 await check_guild_owner(session, data.owner_id, war_request.initiator_guild_id)
+                await check_guild_active(session, war_request.initiator_guild_id)
             except HTTPException:
                 try:
                     await check_guild_owner(session, data.owner_id, war_request.target_guild_id)
+                    await check_guild_active(session, war_request.target_guild_id)
                 except HTTPException:
                     raise HTTPException(403, detail="User is not an owner of either guild")
 

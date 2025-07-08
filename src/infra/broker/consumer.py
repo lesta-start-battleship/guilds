@@ -1,9 +1,9 @@
 import json
 from aiokafka import AIOKafkaConsumer
 
-from services.guild import GuildService
-from services.guild_request import RequestService
-from services.member import MemberService
+from services.guild_ import GuildService
+from services.guild_request_ import RequestService
+from services.member_ import MemberService
 
 
 class KafkaListener:

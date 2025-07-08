@@ -4,7 +4,7 @@ from sqlalchemy import or_, select, func
 from infra.db.models.guild_war import GuildWarRequest, WarStatus
 
 from ..schemas import ConfirmWarRequest
-from ..utils import check_guild_owner, advisory_lock_key
+from ..utils import check_guild_owner, advisory_lock_key, check_guild_active
 
 
 async def confirm_war_validation(
@@ -37,6 +37,9 @@ async def confirm_war_validation(
         user_id=data.target_owner_id,
         guild_id=war_request.target_guild_id
     )
+
+    await check_guild_active(session, war_request.initiator_guild_id)
+    await check_guild_active(session, war_request.target_guild_id)
 
     # 3. Проверка: гильдии не участвуют уже в active войне
     result = await session.execute(
