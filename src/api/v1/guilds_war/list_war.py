@@ -5,17 +5,22 @@ from typing import Union
 from db.database import get_db
 from db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
 from db.models.guild import Member
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .schemas import GuildWarListResponse, GuildWarListParams, GuildWarHistoryListResponse, GuildWarItem, GuildWarHistoryItem
+from .utils import check_user_access
 
 router = APIRouter()
-
+http_bearer = HTTPBearer()
 
 @router.get("/list", response_model=Union[GuildWarListResponse, GuildWarHistoryListResponse])
 async def list_guild_war_requests(
     params: GuildWarListParams = Depends(GuildWarListParams.as_query_params),
     session: AsyncSession = Depends(get_db),
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
+    payload = await check_user_access(token)
+
     if params.is_initiator == params.is_target:
         raise HTTPException(400, detail="Укажите ровно один из параметров: is_initiator или is_target")
 

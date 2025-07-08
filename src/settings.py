@@ -12,6 +12,13 @@ MONGO_DATABASE_URL = os.getenv("MONGO_DB_CONNECTION_URI")
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS')
 
 
+allow_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOW_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+
 KAFKA_GROUP_ID = "guild_service"
 
 class KafkaTopics:

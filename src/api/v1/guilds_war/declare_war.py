@@ -4,11 +4,8 @@ from sqlalchemy import and_, or_, select, func
 from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
-import asyncio
-
 import uuid
-import json
-from aiokafka import AIOKafkaProducer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from settings import KafkaTopics
 from cache.redis_instance import redis
@@ -16,12 +13,11 @@ from db.models.guild import Guild
 from db.models.guild_war import GuildWarRequest, WarStatus
 from db.database import get_db
 
-
 from .schemas import DeclareWarRequest, DeclareWarResponse
-from .utils import check_guild_owner, advisory_lock_key, send_kafka_message
+from .utils import check_guild_owner, advisory_lock_key, send_kafka_message, check_user_access
 
 router = APIRouter()
-# http_bearer = HTTPBearer()
+http_bearer = HTTPBearer()
 
 
 @router.post("/declare", response_model=DeclareWarResponse)
@@ -29,10 +25,11 @@ async def declare_war(
     data: DeclareWarRequest,
     request: Request, 
     session: AsyncSession = Depends(get_db),
-    # token: HTTPAuthorizationCredentials = Depends(http_bearer),
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
-
+        payload = await check_user_access(token)
+        
         try:
             pong = await redis.ping()
             if not pong:

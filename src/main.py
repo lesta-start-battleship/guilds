@@ -4,10 +4,11 @@ from contextlib import asynccontextmanager
 from fastapi.openapi.utils import get_openapi
 from aiokafka import AIOKafkaProducer
 import asyncio
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.v1 import router as v1
 from api.v1.guilds_war.consumers.consume_guild_declare_responses import consume_guild_declare_responses
-from settings import settings
+from settings import settings, allow_origins
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,6 +33,8 @@ async def lifespan(app: FastAPI):
     except asyncio.CancelledError:
         print("Kafka consumer task cancelled")
 
+
+
 app = FastAPI(
     title=settings.project.title,
     description=settings.project.description,
@@ -39,6 +42,20 @@ app = FastAPI(
     debug=settings.debug,
     lifespan=lifespan
 )
+
+
+
+
+
+app.add_middleware(
+    CORSMiddleware,
+    # allow_origins=["http://37.9.53.236"],  # Только этот домен
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"],
+)
+
 
 app.include_router(v1)
 

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
 from aiokafka import AIOKafkaProducer
-
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from cache.redis_instance import redis
 
 from settings import KafkaTopics
@@ -13,11 +13,11 @@ from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHisto
 from db.database import get_db
 
 from .schemas import ConfirmWarRequest, ConfirmWarResponse, DeclinedWarMessage
-from .utils import check_guild_owner, advisory_lock_key, get_guild_owner, send_kafka_message  
+from .utils import check_guild_owner, advisory_lock_key, get_guild_owner, send_kafka_message, check_user_access
 
 
 router = APIRouter()
-
+http_bearer = HTTPBearer()
 
 @router.post("/confirm/{war_id}", response_model=ConfirmWarResponse)
 async def confirm_war(
@@ -25,8 +25,11 @@ async def confirm_war(
     request: Request,
     war_id: int = Path(..., description="ID заявки на войну"),
     session: AsyncSession = Depends(get_db),
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
+        payload = await check_user_access(token)
+
         async with session.begin():  # Обеспечивает транзакционность
             # 1. Найти заявку
             result = await session.execute(
