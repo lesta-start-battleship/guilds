@@ -44,6 +44,5 @@ jobs:
           script: |
             sudo cp /var/www/guilds/.env.sample /var/www/guilds/.env
             cd /var/www/guilds
-            export DOCKER_BUILDKIT=1
-            sudo docker-compose down
-            sudo docker-compose up -d --build
+            sudo docker compose down
+            sudo docker compose up -d --build
