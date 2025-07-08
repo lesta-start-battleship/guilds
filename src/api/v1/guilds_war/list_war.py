@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-
+from typing import Union
 from db.database import get_db
 from db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
 from db.models.guild import Member
@@ -11,7 +11,7 @@ from .schemas import GuildWarListResponse, GuildWarListParams, GuildWarHistoryLi
 router = APIRouter()
 
 
-@router.get("/list")
+@router.get("/list", response_model=Union[GuildWarListResponse, GuildWarHistoryListResponse])
 async def list_guild_war_requests(
     params: GuildWarListParams = Depends(GuildWarListParams.as_query_params),
     session: AsyncSession = Depends(get_db),

@@ -4,10 +4,11 @@ from sqlalchemy import select
 from db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
 from db.database import get_db
 from .schemas import GuildWarItem, GuildWarHistoryItem
+from typing import Union
 
 router = APIRouter()
 
-@router.get("/list/{war_id}")
+@router.get("/list/{war_id}", response_model=Union[GuildWarItem, GuildWarHistoryItem])
 async def get_war_by_id(
     war_id: int = Path(..., description="ID войны"),
     session: AsyncSession = Depends(get_db),
