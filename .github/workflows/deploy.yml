@@ -14,15 +14,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Copy files to server via rsync over SSH
-        uses: burnett01/rsync-deployments@v1.1.15
-        with:
-          switches: -avz --delete
-          path: ./lesta_tz_backend/
-          remote_path: /var/www/guilds
-          remote_host: ${{ secrets.SERVER_IP }}
-          remote_user: ${{ secrets.SERVER_USER }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Save SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Upload project files via rsync
+        run: |
+          rsync -avz --delete -e "ssh -i private_key.pem -o StrictHostKeyChecking=no" \
+            ./ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/guilds
 
       - name: Setup and deploy on server
         uses: appleboy/ssh-action@v1.0.0
