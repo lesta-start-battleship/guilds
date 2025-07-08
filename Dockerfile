@@ -24,6 +24,10 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 ADD ./src /src
 WORKDIR /src
 
+# Копируем скрипт ожидания и даём ему права на исполнение
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
+
 # root is used as a hotfix for package introspection problem
 # https://intellij-support.jetbrains.com/hc/en-us/community/posts/115000373944/comments/7286554132370
 USER root
