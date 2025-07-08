@@ -101,8 +101,10 @@ class GuildWarHistoryListResponse(BaseModel):
     results: List[GuildWarHistoryItem]
 
 
+
 class GuildWarListParams(BaseModel):
-    owner_id: int
+    user_id: int
+    guild_id: int
     is_initiator: bool = False
     is_target: bool = False
     status: Optional[WarStatus] = None
@@ -112,15 +114,17 @@ class GuildWarListParams(BaseModel):
     @classmethod
     def as_query_params(
         cls,
-        owner_id: int = Query(..., description="ID владельца гильдии"),
-        is_initiator: bool = Query(False, description="Получить заявки, где гильдия инициатор"),
-        is_target: bool = Query(False, description="Получить заявки, где гильдия цель"),
+        user_id: int = Query(..., description="ID пользователя, участника гильдии"),
+        guild_id: int = Query(..., description="ID гильдии"),
+        is_initiator: bool = Query(False, description="Показать заявки, где гильдия инициатор"),
+        is_target: bool = Query(False, description="Показать заявки, где гильдия цель"),
         status: Optional[WarStatus] = Query(None, description="Фильтр по статусу"),
-        page: int = Query(1, ge=1, description="Номер страницы"),
-        page_size: int = Query(20, ge=1, le=100, description="Размер страницы"),
+        page: int = Query(1, ge=1),
+        page_size: int = Query(20, ge=1, le=100),
     ):
         return cls(
-            owner_id=owner_id,
+            user_id=user_id,
+            guild_id=guild_id,
             is_initiator=is_initiator,
             is_target=is_target,
             status=status,
