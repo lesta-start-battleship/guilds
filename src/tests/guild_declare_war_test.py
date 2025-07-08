@@ -3,7 +3,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 from httpx import ASGITransport 
 from fastapi.testclient import TestClient
-from src.main import app
+from main import app
 
 @pytest_asyncio.fixture
 async def client():

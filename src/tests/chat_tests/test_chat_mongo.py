@@ -10,7 +10,6 @@ def test_create_model_from_valid_dict():
         "_id": str(ObjectId()),
         "guild_id": 1,
         "user_id": 42,
-        "user_name": "Alice",
         "content": "Hello Mongo",
     }
 
@@ -19,7 +18,6 @@ def test_create_model_from_valid_dict():
     assert isinstance(msg.id, ObjectId)
     assert msg.guild_id == 1
     assert msg.user_id == 42
-    assert msg.user_name == "Alice"
     assert msg.content == "Hello Mongo"
     assert isinstance(msg.timestamp, datetime)
 

@@ -21,7 +21,7 @@ async def get_member(session: AsyncSession, user_id: int, guild_id: int) -> Memb
 
 
 async def handle_websocket(guild_id: int, user_id: int, websocket: WebSocket, db: AsyncSession):
-    logger.info(f"📡 Подключение: guild_id={guild_id}, user_id={user_id}")
+    logger.info(f"Подключение: guild_id={guild_id}, user_id={user_id}")
 
     member = await get_member(db, user_id, guild_id)
     if not member:
@@ -34,17 +34,17 @@ async def handle_websocket(guild_id: int, user_id: int, websocket: WebSocket, db
         await send_initial_history(websocket, db, guild_id)
         await listen_for_messages(websocket, db, guild_id, member)
     except WebSocketDisconnect:
-        logger.warning("🔌 Клиент отключился")
+        logger.warning("Клиент отключился")
     except Exception as e:
-        logger.warning("❌ Общая ошибка в WebSocket:", e)
+        logger.warning("Общая ошибка в WebSocket:", e)
     finally:
         manager.disconnect(guild_id, websocket)
-        logger.warning("🧹 Соединение удалено из менеджера")
+        logger.warning("Соединение удалено из менеджера")
 
 
 
 async def handle_unauthorized_user(websocket: WebSocket):
-    logger.warning("❌ Пользователь не найден в гильдии или не имеет доступа")
+    logger.warning("Пользователь не найден в гильдии или не имеет доступа")
     await manager.connect_user_only(
         websocket,
         {"type": "error", "data": ["Доступ отказан: вы не являетесь членом этой гильдии."]},
@@ -61,15 +61,15 @@ async def send_initial_history(websocket: WebSocket, db: AsyncSession, guild_id:
             "data": enriched,
             "meta": {"skip": 0, "limit": 10, "count": len(enriched)}
         })
-        logger.info(f"📜 История сообщений отправлена (кол-во: {len(enriched)})")
+        logger.info(f"История сообщений отправлена (кол-во: {len(enriched)})")
     except Exception as e:
-        logger.warning("❌ Ошибка при загрузке истории сообщений:", e)
+        logger.warning("Ошибка при загрузке истории сообщений:", e)
 
 
 async def listen_for_messages(websocket: WebSocket, db: AsyncSession, guild_id: int, member):
     while True:
         data = await websocket.receive_json()
-        logger.info(f"📨 Получено сообщение от {member.user_id}: {data}")
+        logger.info(f"Получено сообщение от {member.user_id}: {data}")
 
         msg_type = data.get("type")
         payload = data.get("payload", {})
@@ -91,9 +91,9 @@ async def handle_history_request(websocket: WebSocket, db: AsyncSession, guild_i
             "data": enriched,
             "meta": {"skip": skip, "limit": limit, "count": len(enriched)}
         })
-        logger.info(f"📜 История (skip={skip}, limit={limit}) отправлена")
+        logger.info(f"История (skip={skip}, limit={limit}) отправлена")
     except Exception as e:
-        logger.warning("❌ Ошибка при загрузке истории:", e)
+        logger.warning("Ошибка при загрузке истории:", e)
 
 
 async def handle_new_message(db: AsyncSession, guild_id: int, member, data: dict):
@@ -109,6 +109,6 @@ async def handle_new_message(db: AsyncSession, guild_id: int, member, data: dict
         outgoing = jsonable_encoder(saved)
         outgoing["username"] = username
         await manager.broadcast(guild_id, outgoing)
-        logger.info("📢 Сообщение разослано всем подключённым клиентам")
+        logger.info("Сообщение разослано всем подключённым клиентам")
     except Exception as e:
-        logger.warning("❌ Ошибка при сохранении/рассылке сообщения:", e)
+        logger.warning("Ошибка при сохранении/рассылке сообщения:", e)
