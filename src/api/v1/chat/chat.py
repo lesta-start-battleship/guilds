@@ -15,7 +15,7 @@ async def guild_websocket(
     await handle_websocket(guild_id, user_id, websocket, db)
 
 # {
-#   "type": "history",
+#   "type": "history", "error",
 #   "payload": {
 #     "skip": 0,
 #     "limit": 10
