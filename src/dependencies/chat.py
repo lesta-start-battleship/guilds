@@ -1,4 +1,4 @@
-from repositories.chat_mongo_repo import MongoChatRepository
+from infra.repositories.chat_mongo_repo import MongoChatRepository
 from settings import settings
 
 mongo_repo = MongoChatRepository(

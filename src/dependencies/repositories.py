@@ -1,26 +1,25 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db
-from repositories.guild import GuildRepository
-from repositories.member import MemberRepository
-from repositories.role import RoleRepository
-from repositories.permisson import PermissionRepository
+from infra.db.database import get_db
+from infra.repositories.guild_sql import SQLGuildRepository
+from infra.repositories.member_sql import SQLMemberRepository
+from infra.repositories.role_sql import SQLRoleRepository
 
-from cache.redis_repo import RedisRepository
-from cache.redis_instance import redis
+from infra.cache.redis_repo_ import RedisRepository
+from infra.cache.redis_instance import redis
 
 def get_guild_repository(session: AsyncSession = Depends(get_db)):
-    return GuildRepository(session)
+    return SQLGuildRepository(session)
 
 def get_member_repository(session: AsyncSession = Depends(get_db)):
-    return MemberRepository(session)
+    return SQLMemberRepository(session)
 
 def get_role_repository(session: AsyncSession = Depends(get_db)):
-    return RoleRepository(session)
+    return SQLRoleRepository(session)
 
-def get_permission_repository(session: AsyncSession = Depends(get_db)):
-    return PermissionRepository(session)
+# def get_permission_repository(session: AsyncSession = Depends(get_db)):
+#     return PermissionRepository(session)
 
 def get_redis_repository() -> RedisRepository:
     return redis

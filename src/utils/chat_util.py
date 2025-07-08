@@ -7,13 +7,13 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models.guild import Member
-from db.mongo.chat import MongoChatMessage
+from infra.db.models.guild import MemberORM
+from infra.db.mongo.chat import MongoChatMessage
 
 
 async def get_username_by_id(db: AsyncSession, user_id: int) -> str:
     result = await db.execute(
-        select(Member.user_name).where(Member.id == user_id)
+        select(MemberORM.user_name).where(MemberORM.id == user_id)
     )
     username = result.scalar()
     return username or "Unknown"

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from db.models.guild_war import WarStatus
+from infra.db.models.guild_war import WarStatus
 
 class DeclareWarRequest(BaseModel):
     initiator_guild_id: int = Field(..., description="ID гильдии, которая инициирует войну")

@@ -2,19 +2,21 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, status, Depends
 
+from domain.exceptions.guild import GuildIsFullException, GuildNotExistsException
+from domain.exceptions.guild_request import RequestAlreadyExistException, RequestNotFoundException
+from domain.exceptions.member import MemberAlreadyInGuildException, MemberInOtherGuildException, MemberNotFoundException, MemberNotHavePermissionException
+from domain.exceptions.tag import InvalidTagFormatException
+
 from schemas.base import MessageResponse, Response
 from schemas.member import AddMemberRequest, MemberResponse
-from schemas.guild_request import RequestPagination
+from schemas.guild_request import RequestPagination, RequestResponse
 
 from dependencies.services import get_request_service
-from services.guild_request import RequestService
+from services.guild_request_ import RequestService
 
-from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException, GuildIsFullException
-from exceptions.member import MemberAlreadyInGuildException, MemberNotHavePermissionException, MemberNotFoundException, MemberInOtherGuildException
-from exceptions.guild_request import RequestAlreadyExistException, RequestNotFoundException
 
 from .responses.guild import guild_not_found, uncorrect_guild_tag, guild_is_full
-from .responses.member import member_already_in_guild, member_not_found, member_not_have_permissoin
+from .responses.member import member_already_in_guild, member_not_found, member_not_have_permissoin, member_in_other_guild
 from .responses.guild_request import request_already_exists, request_not_found
 
 router = APIRouter()
@@ -32,34 +34,37 @@ async def get_requests(
             value=RequestPagination(
                 items=requests,
                 total_items=len(requests),
-                total_pages=0
+                total_pages=1
             )
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
     except MemberNotFoundException:
         return member_not_found
+    except MemberInOtherGuildException:
+        return member_in_other_guild
     except MemberNotHavePermissionException:
         return member_not_have_permissoin
 
 
-@router.post('/{tag}', response_model=MessageResponse)
-async def send_requests(
+@router.post('/{tag}', response_model=Response[RequestResponse])
+async def send_request(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: int,
     user_form: AddMemberRequest,
     request_service: RequestService = Depends(get_request_service)
     ):
     try:
-        await request_service.add_request(tag, user_id, user_form.user_name)
-        return MessageResponse(
-            error_code=status.HTTP_201_CREATED
+        req = await request_service.add_request(tag, user_id, user_form.user_name)
+        return Response(
+            error_code=status.HTTP_201_CREATED,
+            value=req
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
     except RequestAlreadyExistException:
         return request_already_exists
@@ -80,9 +85,9 @@ async def apply_request(
             error_code=status.HTTP_201_CREATED,
             value=member
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
     except MemberNotFoundException:
         return member_not_found
@@ -108,9 +113,9 @@ async def cancel_request(
         return MessageResponse(
             error_code=status.HTTP_200_OK
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
     except MemberNotFoundException:
         return member_not_found

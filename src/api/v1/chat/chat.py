@@ -6,7 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.openapi.utils import get_openapi
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db
+from infra.db.database import get_db
 from dependencies.chat import mongo_repo
 from services.chat_service import get_member
 from utils.chat_util import manager, enrich_messages_with_usernames, get_username_by_id

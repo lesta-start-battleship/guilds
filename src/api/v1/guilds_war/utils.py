@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 import hashlib
 
-from db.models.guild import Member, Role
+from infra.db.models.guild import MemberORM, RoleORM
 
 async def check_guild_owner(
     session: AsyncSession,
@@ -11,12 +11,12 @@ async def check_guild_owner(
     guild_id: int
 ) -> None:
     result = await session.execute(
-        select(Member)
-        .join(Role)
+        select(MemberORM)
+        .join(RoleORM)
         .where(
-            Member.user_id == user_id,
-            Member.guild_id == guild_id,
-            Role.owner == True
+            MemberORM.user_id == user_id,
+            MemberORM.guild_id == guild_id,
+            RoleORM.owner == True
         )
     )
     member = result.scalar_one_or_none()

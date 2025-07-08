@@ -2,14 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, status, Depends
 
+from domain.exceptions.guild import GuildAlreadyExistsException, GuildNotExistsException
+from domain.exceptions.member import MemberAlreadyInGuildException, MemberNotOwnerException
+from domain.exceptions.tag import InvalidTagFormatException
 from schemas.base import MessageResponse, Response
 from schemas.guild import GuildResponse, CreateGuildRequest, EditGuildRequest, GuildPagination
 
-from services.guild import GuildService
+from services.guild_ import GuildService
 from dependencies.services import get_guild_service
-
-from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException, GuildAlreadyExistException
-from exceptions.member import MemberIsNotOwnerException, MemberAlreadyInGuildException
 
 from .responses.guild import guild_not_found, guild_already_exists, uncorrect_guild_tag
 from .responses.member import member_already_in_guild, member_is_not_owner
@@ -39,14 +39,14 @@ async def get_guild_by_tag(
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        guild = await guild_service.get_guild_by_tag(tag)
+        guild = await guild_service.get_by_tag(tag)
         return Response(
             error_code=status.HTTP_200_OK,
             value=guild
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
 
 
@@ -62,9 +62,9 @@ async def create_guild(
             error_code=status.HTTP_201_CREATED,
             value=guild
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildAlreadyExistException:
+    except GuildAlreadyExistsException:
         return guild_already_exists
     except MemberAlreadyInGuildException:
         return member_already_in_guild
@@ -81,11 +81,11 @@ async def delete_guild(
         return Response(
         error_code=status.HTTP_200_OK
     )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
-    except MemberIsNotOwnerException:
+    except MemberNotOwnerException:
         return member_is_not_owner
     
     
@@ -102,9 +102,9 @@ async def edit_guild(
             error_code=status.HTTP_200_OK,
             value=guild
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
-    except MemberIsNotOwnerException:
+    except MemberNotOwnerException:
         return member_is_not_owner

@@ -8,8 +8,8 @@ from aiokafka import AIOKafkaProducer
 import asyncio
 
 from settings import KafkaTopics
-from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
-from db.database import get_db
+from infra.db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
+from infra.db.database import get_db
 
 from .schemas import ConfirmWarRequest, ConfirmWarResponse
 from .utils import check_guild_owner, advisory_lock_key

@@ -2,15 +2,18 @@ from typing import Annotated, List
 
 from fastapi import APIRouter, Path, Query, status, Depends
 
+from domain.exceptions.guild import GuildNotExistsException
+from domain.exceptions.member import MemberInOtherGuildException, MemberNotFoundException, MemberNotHavePermissionException
+from domain.exceptions.role import RoleNotFoundException
+from domain.exceptions.tag import InvalidTagFormatException
 from schemas.base import MessageResponse, Response
 from schemas.member import EditMemberRequest, MemberResponse, MemberPagination
 
 from dependencies.services import get_member_service
-from services.member import MemberService
+from dependencies.services import get_guild_service
+from services.member_ import MemberService
+from services.guild_ import GuildService
 
-from exceptions.guild import UncorrectGuildTagException, GuildNotFoundException
-from exceptions.member import MemberNotHavePermissionException, MemberNotFoundException, MemberInOtherGuildException
-from exceptions.role import RoleNotFoundException
 
 from .responses.guild import guild_not_found, uncorrect_guild_tag
 from .responses.member import member_is_not_owner, member_not_found, member_in_other_guild, member_not_have_permissoin
@@ -30,7 +33,7 @@ async def get_member_by_user_id(
             value=member
         )
     except MemberNotFoundException:
-        return member_not_found
+        return MessageResponse(error=MemberNotFoundException.message, error_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.get('/guild_id/{guild_id}', response_model=Response[List[int]])
@@ -44,8 +47,8 @@ async def get_members_by_guild_id(
             error_code=status.HTTP_200_OK,
             value=members
         )
-    except GuildNotFoundException:
-        return guild_not_found
+    except GuildNotExistsException:
+        return MessageResponse(error=GuildNotExistsException.message, error_code=status.HTTP_404_NOT_FOUND)
     
     
 @router.get('/{tag}', response_model=Response[MemberPagination])
@@ -65,9 +68,9 @@ async def get_members_by_guild_tag(
                 total_pages=0
             )
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
         
         
@@ -76,16 +79,16 @@ async def delete_member(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: Annotated[int, Path(..., description='User ID')],
     guild_member_id: int,
-    member_service: MemberService = Depends(get_member_service)
+    guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        await member_service.delete_member(tag, guild_member_id, user_id)
+        await guild_service.remove_member(tag, user_id,  guild_member_id)
         return Response(
             error_code=status.HTTP_200_OK
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
     except MemberNotFoundException:
         return member_not_found
@@ -99,16 +102,16 @@ async def delete_member(
 async def exit_from_guild(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: Annotated[int, Path(..., description='User ID')],
-    member_service: MemberService = Depends(get_member_service)
+    guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        await member_service.exit_from_guild(tag, user_id)
+        await guild_service.leave_guild(tag, user_id)
         return Response(
             error_code=status.HTTP_200_OK
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
     except MemberNotFoundException:
         return member_not_found
@@ -124,20 +127,20 @@ async def change_member_role(
     guild_member_id: int,
     user_id: Annotated[int, Path(..., description='User ID')],
     role_form: EditMemberRequest,
-    member_service: MemberService = Depends(get_member_service)
+    guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        member = await member_service.change_member_role(tag, guild_member_id, user_id, role_form.role_id)
+        member = await guild_service.change_member_role(tag, guild_member_id, user_id, role_form.role_id)
         return Response(
             error_code=status.HTTP_200_OK,
             value=member
         )
-    except UncorrectGuildTagException:
+    except InvalidTagFormatException:
         return uncorrect_guild_tag
-    except GuildNotFoundException:
+    except GuildNotExistsException:
         return guild_not_found
     except MemberNotFoundException:
-        return member_is_not_owner
+        return member_not_found
     except MemberInOtherGuildException:
         return member_in_other_guild
     except MemberNotHavePermissionException:

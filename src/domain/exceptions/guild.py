@@ -1,15 +1,35 @@
-class GuildAlreadyExistsException(Exception):
-    def __init__(self, tag: str):
-        super().__init__(f'Guild "{tag}" alreadry exists')
-        
-class GuildNotExistsException(Exception):
-    def __init__(self, tag: str):
-        super().__init__(f'Guild "{tag}" not exists')
+from dataclasses import dataclass
 
-class InvalidTagFormatException(Exception):
-    def __init__(self, tag: str):
-        super().__init__(f'Invalid tag format: {tag}')
+from domain.exceptions.base import ApplicationException
 
-class UserNotOwnerException(Exception):
-    def __init__(self, user_id: int):
-        super().__init__(f'User "{user_id}" is not owner')
+@dataclass
+class GuildAlreadyExistsException(ApplicationException):
+    text: str
+    
+    @property
+    def message(self):
+        return f'Гильдия с тегом {self.text} уже существует'
+
+@dataclass
+class GuildNotExistsException(ApplicationException):
+    text: str
+    
+    @property
+    def message(self):
+        return f'Гильдии {self.text} не существует'
+
+@dataclass
+class GuildIsNotActiveException(ApplicationException):
+    text: str
+    
+    @property
+    def message(self):
+        return f'Гильдия {self.text} не активна'
+
+@dataclass
+class GuildIsFullException(ApplicationException):
+    text: str
+    
+    @property
+    def message(self):
+        return f'Гильдия {self.text} заполнена'

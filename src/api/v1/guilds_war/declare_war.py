@@ -5,9 +5,9 @@ from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
 
-from db.models.guild import Guild
-from db.models.guild_war import GuildWarRequest, WarStatus
-from db.database import get_db
+from infra.db.models.guild import GuildORM
+from infra.db.models.guild_war import GuildWarRequest, WarStatus
+from infra.db.database import get_db
 
 from .schemas import DeclareWarRequest, DeclareWarResponse
 from .utils import check_guild_owner, advisory_lock_key
@@ -29,7 +29,7 @@ async def declare_war(
 
             # 1. Проверка: существует ли инициирующая гильдия
             result = await session.execute(
-                select(Guild).where(Guild.id == data.initiator_guild_id)
+                select(GuildORM).where(GuildORM.id == data.initiator_guild_id)
             )
             initiator_guild = result.scalar_one_or_none()
             if not initiator_guild:
@@ -44,7 +44,7 @@ async def declare_war(
 
             # 3. Проверка: существует ли целевая гильдия
             result = await session.execute(
-                select(Guild).where(Guild.id == data.target_guild_id)
+                select(GuildORM).where(GuildORM.id == data.target_guild_id)
             )
             target_guild = result.scalar_one_or_none()
             if not target_guild:
