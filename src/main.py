@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.v1 import router as v1
 from api.v1.guilds_war.consumers.consume_guild_declare_responses import consume_guild_declare_responses
+from api.v1.guilds_war.consumers.consume_scoreboard_guild_war import consume_scoreboard_guild_war
+
 from settings import settings, allow_origins
 
 @asynccontextmanager
@@ -19,7 +21,8 @@ async def lifespan(app: FastAPI):
     app.state.producer = producer
 
     # Запуск Kafka Consumer в фоне
-    consumer_task = asyncio.create_task(consume_guild_declare_responses(app))
+    consume_guild_declare_responses_task = asyncio.create_task(consume_guild_declare_responses(app))
+    consumer_scoreboard_guild_war_task = asyncio.create_task(consume_scoreboard_guild_war(app))
 
     yield
 
@@ -27,9 +30,11 @@ async def lifespan(app: FastAPI):
     await producer.stop()
     print("Kafka producer stopped")
 
-    consumer_task.cancel()
+    consume_guild_declare_responses_task.cancel()
+    consumer_scoreboard_guild_war_task.cancel()
     try:
-        await consumer_task
+        await consume_guild_declare_responses_task
+        await consumer_scoreboard_guild_war_task
     except asyncio.CancelledError:
         print("Kafka consumer task cancelled")
 
