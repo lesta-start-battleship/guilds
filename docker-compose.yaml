@@ -75,6 +75,11 @@ services:
       - dbdata6:/data/db
     networks:
       - lesta
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mongo-express:
     image: mongo-express
@@ -87,13 +92,9 @@ services:
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_DB_ADMIN_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_DB_ADMIN_PASSWORD}
       ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
-    healthcheck:
-      test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     networks:
       - lesta
 
