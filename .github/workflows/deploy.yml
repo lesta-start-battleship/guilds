@@ -28,10 +28,9 @@ jobs:
           script: |
             sudo rm -rf /var/www/guilds/*
 
-      - name: Upload only clean project files via rsync
+      - name: Upload all project files via rsync (no exclude)
         run: |
           rsync -avz \
-            --exclude-from=.github/rsync-exclude.txt \
             -e "ssh -i private_key.pem -o StrictHostKeyChecking=no" \
             ./ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/guilds
