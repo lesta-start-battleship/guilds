@@ -5,9 +5,8 @@ from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
 from aiokafka import AIOKafkaProducer
-import asyncio
-import uuid
-import json
+
+from cache.redis_instance import redis
 
 from settings import KafkaTopics
 from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
@@ -107,6 +106,13 @@ async def confirm_war(
                 
                 req_initiator_owner_id = await get_guild_owner(session, req.initiator_guild_id)
 
+                correlation_id = await redis.redis.get(f"war-correlation:{req.id}")
+                if correlation_id:
+                    correlation_id = correlation_id.decode("utf-8")  # bytes → str
+                    await redis.redis.delete(f"war-correlation:{req.id}")
+                else:
+                    print(f"[WARN] Correlation ID not found for war_id={req.id}")
+
                 # Отправка в Kafka
                 msg = DeclinedWarMessage(
                     war_id=req.id,
@@ -115,7 +121,8 @@ async def confirm_war(
                     target_guild_id=req.target_guild_id,
                     initiator_owner_id=req_initiator_owner_id,
                     target_owner_id=data.target_owner_id,
-                    declined_at=updated_at
+                    declined_at=updated_at,
+                    correlation_id=correlation_id
                 )
 
                 await send_kafka_message(
@@ -135,12 +142,12 @@ async def confirm_war(
                 target_owner_id=data.target_owner_id,
             )
 
-        # Отправка в Kafka
-        await send_kafka_message(
-            request=request,
-            topic=KafkaTopics.guild_war_confirm,
-            message=response,
-        )
+            # Отправка в Kafka
+            await send_kafka_message(
+                request=request,
+                topic=KafkaTopics.guild_war_confirm,
+                message=response,
+            )
 
         return response
     

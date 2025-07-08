@@ -33,12 +33,12 @@ async def declare_war(
 ):
     try:
 
-        # try:
-        #     pong = await redis.ping()
-        #     if not pong:
-        #         raise HTTPException(500, detail="Redis is not available")
-        # except Exception as e:
-        #     raise HTTPException(500, detail=f"Redis connection failed: {e}")
+        try:
+            pong = await redis.ping()
+            if not pong:
+                raise HTTPException(500, detail="Redis is not available")
+        except Exception as e:
+            raise HTTPException(500, detail=f"Redis connection failed: {e}")
 
         # Отправка сообщения в Kafka
         correlation_id = str(uuid.uuid4())
@@ -57,17 +57,19 @@ async def declare_war(
 
         # 2. Ждём ответ из Redis
     
-        # key = f"rage-response:{correlation_id}"
-        # rage_response = await redis.redis.blpop(key, timeout=15)
+        key = f"rage-response:{correlation_id}"
+        rage_response = await redis.redis.blpop(key, timeout=60)
 
-        # if not rage_response:
-        #     raise HTTPException(504, "Timeout while validating rage points")
+        if not rage_response:
+            raise HTTPException(504, "Timeout while validating rage points")
 
-        # _, value = rage_response
-        # if value != "true":
-        #     raise HTTPException(400, "Not enough rage points to declare war")
+        _, value = rage_response
+        if value.decode("utf-8") != "true":
+            raise HTTPException(400, "Not enough rage points to declare war")
         
-
+        # ✅ Удаляем ключ после успешной проверки
+        await redis.redis.delete(key)
+        
 
         async with session.begin():  # Обеспечивает транзакционность
 
@@ -166,6 +168,9 @@ async def declare_war(
             )
             session.add(new_request)
             await session.flush()
+
+            war_id = new_request.id
+            await redis.redis.set(f"war-correlation:{war_id}", correlation_id)
 
             response =  DeclareWarResponse(
                 war_id=new_request.id,

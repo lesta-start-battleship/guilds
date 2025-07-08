@@ -43,6 +43,19 @@ class CancelWarResponse(BaseModel):
     target_owner_id: int
 
 
+
+class CancelWarMessage(BaseModel):
+    war_id: int
+    status: Literal[WarStatus.canceled]
+    cancelled_by: int 
+    cancelled_at: datetime
+    initiator_guild_id: int
+    target_guild_id: int
+    initiator_owner_id: int
+    target_owner_id: int
+    correlation_id: str
+
+
 class DeclinedWarMessage(BaseModel):
     war_id: int
     status: Literal[WarStatus.declined]
@@ -51,3 +64,4 @@ class DeclinedWarMessage(BaseModel):
     initiator_owner_id: int
     target_owner_id: int
     declined_at: datetime
+    correlation_id: str

@@ -6,11 +6,12 @@ from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
 
 from settings import KafkaTopics
+from cache.redis_instance import redis
 
 from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
 from db.database import get_db
 
-from .schemas import CancelWarRequest, CancelWarResponse
+from .schemas import CancelWarRequest, CancelWarResponse, CancelWarMessage
 from .utils import check_guild_owner, advisory_lock_key, send_kafka_message, get_guild_owner
 
 router = APIRouter()
@@ -67,7 +68,32 @@ async def cancel_war(
             target_owner_id = await get_guild_owner(session, war_request.target_guild_id)
 
 
-            response = CancelWarResponse(
+            correlation_id = await redis.redis.get(f"war-correlation:{war_id}")
+            if correlation_id:
+                correlation_id = correlation_id.decode("utf-8")  # bytes → str
+                await redis.redis.delete(f"war-correlation:{war_id}")
+            else:
+                print(f"[WARN] Correlation ID not found for war_id={war_id}")
+
+            message = CancelWarMessage(
+                    war_id=war_id,
+                    status=WarStatus.canceled,
+                    cancelled_by=data.owner_id,
+                    cancelled_at=now,
+                    initiator_guild_id=war_request.initiator_guild_id,
+                    target_guild_id=war_request.target_guild_id,
+                    initiator_owner_id=initiator_owner_id,
+                    target_owner_id=target_owner_id,
+                    correlation_id=str(correlation_id)
+            )
+
+            await send_kafka_message(
+                request=request,
+                topic=KafkaTopics.guild_war_canceled_declined_expired,
+                message=message,
+            )
+
+        return CancelWarResponse(
                     war_id=war_id,
                     status=WarStatus.canceled,
                     cancelled_by=data.owner_id,
@@ -77,13 +103,6 @@ async def cancel_war(
                     initiator_owner_id=initiator_owner_id,
                     target_owner_id=target_owner_id,
             )
-
-        await send_kafka_message(
-            request=request,
-            topic=KafkaTopics.guild_war_canceled_declined_expired,
-            message=response,
-        )
-        return response
 
     except DBAPIError as e:
         if isinstance(e.__cause__, DeadlockDetectedError):

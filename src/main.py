@@ -3,27 +3,34 @@ from contextlib import asynccontextmanager
 
 from fastapi.openapi.utils import get_openapi
 from aiokafka import AIOKafkaProducer
+import asyncio
 
 from api.v1 import router as v1
+from api.v1.guilds_war.consumers.consume_guild_declare_responses import consume_guild_declare_responses
 from settings import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
-    # Создание Kafka producer и сохранение в app.state
+    # Запуск Kafka Producer
     producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
-
     await producer.start()
     print("Kafka producer started")
     app.state.producer = producer
 
-    # Запуск приложения
+    # Запуск Kafka Consumer в фоне
+    consumer_task = asyncio.create_task(consume_guild_declare_responses(app))
+
     yield
 
-    # Завершение работы продюсера
-    await app.state.producer.stop()
+    # Завершение
+    await producer.stop()
     print("Kafka producer stopped")
 
+    consumer_task.cancel()
+    try:
+        await consumer_task
+    except asyncio.CancelledError:
+        print("Kafka consumer task cancelled")
 
 app = FastAPI(
     title=settings.project.title,
