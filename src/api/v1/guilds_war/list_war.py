@@ -26,9 +26,9 @@ async def list_guild_war_requests(
 
     # 🔒 Проверка, что user_id — участник указанной гильдии
     result = await session.execute(
-        select(MemberORM).where(
-            MemberORM.user_id == params.user_id,
-            MemberORM.guild_id == params.guild_id
+        select(Member).where(
+            Member.user_id == params.user_id,
+            Member.guild_id == params.guild_id
         )
     )
     if not result.scalar_one_or_none():
