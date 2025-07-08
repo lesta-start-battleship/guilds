@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import or_, select, func
-from db.models.guild_war import GuildWarRequest, WarStatus
+from infra.db.models.guild_war import GuildWarRequest, WarStatus
 
 from ..schemas import ConfirmWarRequest
 from ..utils import check_guild_owner, advisory_lock_key

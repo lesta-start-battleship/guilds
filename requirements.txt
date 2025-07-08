@@ -40,4 +40,6 @@ httpx
 
 aiokafka
 
+faststream[kafka]
+
 redis[async]

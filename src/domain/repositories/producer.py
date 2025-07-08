@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class ProduserBase(ABC):
+class ProducerBase(ABC):
     
     @abstractmethod
     def publish_guild_created(self, guild_id: int, guild_tag: str, owner_id: int): ...

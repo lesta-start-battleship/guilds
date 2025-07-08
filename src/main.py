@@ -2,24 +2,30 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 from fastapi.openapi.utils import get_openapi
-from aiokafka import AIOKafkaProducer
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.v1 import router as v1
+from api.v1.guilds.broker import broker
 from api.v1.guilds_war.consumers.consume_guild_declare_responses import consume_guild_declare_responses
+from dependencies.repositories import get_producer, init_producer
 from settings import settings, allow_origins
+    
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Запуск Kafka Producer
-    producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
+    await init_producer()
+    # producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
+    producer = get_producer()
     await producer.start()
     print("Kafka producer started")
     app.state.producer = producer
 
     # Запуск Kafka Consumer в фоне
     consumer_task = asyncio.create_task(consume_guild_declare_responses(app))
+    
+    await broker.start()
 
     yield
 
@@ -42,9 +48,6 @@ app = FastAPI(
     debug=settings.debug,
     lifespan=lifespan
 )
-
-
-
 
 
 app.add_middleware(

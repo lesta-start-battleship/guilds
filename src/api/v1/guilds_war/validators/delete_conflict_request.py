@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import or_, select
 from datetime import datetime
 
-from cache.redis_instance import redis
+from infra.cache.redis_instance import redis
 
 from settings import KafkaTopics
-from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
+from infra.db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
 from ..schemas import ConfirmWarRequest, DeclinedWarMessage
 from ..utils import  get_guild_owner, send_kafka_message
 

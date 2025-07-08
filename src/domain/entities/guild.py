@@ -48,6 +48,10 @@ class Guild:
     def is_full(self) -> bool:
         return self.members_count >= settings.max_members
     
+    @property
+    def members_count(self) -> int:
+        return len(self.members)
+    
     
     def edit_title_description(self, member_id: int, title: Optional[str] = None, description: Optional[str] = None):
         if member_id != self.owner_id:

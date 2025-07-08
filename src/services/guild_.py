@@ -7,6 +7,7 @@ from domain.exceptions.member import MemberAlreadyInGuildException, MemberNotFou
 from domain.exceptions.role import RoleNotFoundException
 from domain.repositories.guild_repo import GuildRepositoryBase
 from domain.repositories.member_repo import MemberRepositoryBase
+from domain.repositories.producer import ProducerBase
 from domain.repositories.role_repo import RoleRepositoryBase
 
 from domain.values.tag import Tag
@@ -20,17 +21,26 @@ class GuildService:
         self,
         guild_repo: GuildRepositoryBase,
         member_repo: MemberRepositoryBase,
-        role_repo: RoleRepositoryBase
+        role_repo: RoleRepositoryBase,
+        producer: ProducerBase
         ):
         self.guild_repo = guild_repo
         self.member_repo = member_repo
         self.role_repo = role_repo
+        self.producer = producer
     
     async def get_by_tag(self, tag: str) -> GuildResponse:
         valid_tag = Tag(tag)
         guild = await self.guild_repo.get_by_tag(str(valid_tag))
         if not guild:
             raise GuildNotExistsException(valid_tag)
+        return guild_domain_to_dto(guild)
+    
+    
+    async def get_by_owner_id(self, user_id: int) -> GuildResponse:
+        guild = await self.guild_repo.get_by_owner_id(user_id)
+        if not guild:
+            raise MemberNotOwnerException(user_id)
         return guild_domain_to_dto(guild)
     
     
@@ -73,6 +83,7 @@ class GuildService:
             role=role
         )
         await self.member_repo.create(member)
+        self.producer.publish_guild_created(guild.id, str(guild.tag), guild.owner_id)
         return guild_domain_to_dto(guild)
     
     
@@ -84,7 +95,7 @@ class GuildService:
         return guild_domain_to_dto(guild)
     
     
-    async def delete_guild(self, tag: str, user_id: int) -> None:
+    async def delete_guild(self, tag: str, user_id: int) -> str:
         valid_tag = Tag(tag)
         if not await self.guild_repo.exists_by_tag(str(valid_tag)):
             raise GuildNotExistsException(tag)
@@ -94,6 +105,8 @@ class GuildService:
             raise MemberNotOwnerException(user_id)
         
         await self.guild_repo.delete(str(valid_tag))
+        self.producer.publish_guild_deleted(guild.id)
+        return str(valid_tag)
         
     
     async def add_member(self, tag: str, member_id: int, user_id: int, username: str) -> MemberResponse:
@@ -123,8 +136,7 @@ class GuildService:
         
         guild.add_member(user_id, role.id, guild_member.user_id, guild_member.role)
         member = await self.member_repo.create(member)
-        # await self.guild_repo.save(guild)
-        
+        self.producer.publish_guild_member_count_changed(guild.id, user_id, guild.members_count)
         return member_domain_to_dto(member)
     
     
@@ -168,6 +180,7 @@ class GuildService:
         
         guild.remove_member(member.user_id, guild_member.user_id, guild_member.role, member.role)
         await self.member_repo.delete(member.user_id)
+        self.producer.publish_guild_member_count_changed(guild.id, target_user_id, guild.members_count)
         
     
     async def leave_guild(self, tag: str, member_id: int) -> None:
@@ -182,15 +195,4 @@ class GuildService:
         
         guild.leave_guild(guild_member.user_id)
         await self.member_repo.delete(guild_member.user_id)
-    
-    
-    async def on_user_deleted(self, user_id: int) -> bool:
-        guild = await self.guild_repo.get_by_owner_id(user_id)
-        if guild:
-            await self.guild_repo.delete(guild.tag)
-            return True
-        try:
-            await self.member_repo.delete(user_id)
-            return True
-        except MemberNotFoundException:
-            return False
+        self.producer.publish_guild_member_count_changed(guild.id, member_id, guild.members_count)

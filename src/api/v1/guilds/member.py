@@ -1,6 +1,7 @@
 from typing import Annotated, List
 
 from fastapi import APIRouter, Path, Query, status, Depends
+from fastapi.security import HTTPAuthorizationCredentials
 
 from domain.exceptions.guild import GuildNotExistsException
 from domain.exceptions.member import MemberInOtherGuildException, MemberNotFoundException, MemberNotHavePermissionException
@@ -14,9 +15,10 @@ from dependencies.services import get_guild_service
 from services.member_ import MemberService
 from services.guild_ import GuildService
 
+from utils.validate_token import http_bearer, validate_token
 
 from .responses.guild import guild_not_found, uncorrect_guild_tag
-from .responses.member import member_is_not_owner, member_not_found, member_in_other_guild, member_not_have_permissoin
+from .responses.member import member_not_found, member_in_other_guild, member_not_have_permissoin
 from .responses.role import role_not_found
 
 router = APIRouter()
@@ -78,11 +80,12 @@ async def get_members_by_guild_tag(
 async def delete_member(
     tag: Annotated[str, Path(..., description='Guild tag')],
     user_id: Annotated[int, Path(..., description='User ID')],
-    guild_member_id: int,
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        await guild_service.remove_member(tag, user_id,  guild_member_id)
+        payload = await validate_token(token)
+        await guild_service.remove_member(tag, user_id, int(payload['sub']))
         return Response(
             error_code=status.HTTP_200_OK
         )
@@ -98,14 +101,15 @@ async def delete_member(
         return member_not_have_permissoin
 
 
-@router.delete('/{tag}/exit/{user_id}', response_model=MessageResponse)
+@router.delete('/{tag}', response_model=MessageResponse)
 async def exit_from_guild(
     tag: Annotated[str, Path(..., description='Guild tag')],
-    user_id: Annotated[int, Path(..., description='User ID')],
-    guild_service: GuildService = Depends(get_guild_service)
+    guild_service: GuildService = Depends(get_guild_service),
+    token: HTTPAuthorizationCredentials = Depends(http_bearer)
     ):
     try:
-        await guild_service.leave_guild(tag, user_id)
+        payload = await validate_token(token)
+        await guild_service.leave_guild(tag, int(payload['sub']))
         return Response(
             error_code=status.HTTP_200_OK
         )
@@ -124,13 +128,14 @@ async def exit_from_guild(
 @router.patch('/{tag}/{user_id}', response_model=Response[MemberResponse])
 async def change_member_role(
     tag: Annotated[str, Path(..., description='Guild tag')],
-    guild_member_id: int,
     user_id: Annotated[int, Path(..., description='User ID')],
     role_form: EditMemberRequest,
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        member = await guild_service.change_member_role(tag, guild_member_id, user_id, role_form.role_id)
+        payload = await validate_token(token)
+        member = await guild_service.change_member_role(tag, int(payload['sub']), user_id, role_form.role_id)
         return Response(
             error_code=status.HTTP_200_OK,
             value=member

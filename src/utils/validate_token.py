@@ -12,6 +12,9 @@ from fastapi.security import HTTPBearer
 
 # Проверка access_token и возврат payload
 
+# payload['identity']
+# payload[]
+
 http_bearer = HTTPBearer()
 
 async def validate_token(

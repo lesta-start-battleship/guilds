@@ -4,9 +4,9 @@ from sqlalchemy import and_, or_, select, func
 import uuid
 
 from settings import KafkaTopics
-from cache.redis_instance import redis
-from db.models.guild import Guild
-from db.models.guild_war import GuildWarRequest, WarStatus
+from infra.cache.redis_instance import redis
+from infra.db.models.guild import GuildORM
+from infra.db.models.guild_war import GuildWarRequest, WarStatus
 
 from ..schemas import DeclareWarRequest
 from ..utils import check_guild_owner, advisory_lock_key, send_kafka_message
@@ -24,7 +24,7 @@ async def declare_war_validation(
 
     # 1. Проверка: существует ли инициирующая гильдия
     result = await session.execute(
-        select(Guild).where(Guild.id == data.initiator_guild_id)
+        select(GuildORM).where(GuildORM.id == data.initiator_guild_id)
     )
     initiator_guild = result.scalar_one_or_none()
     if not initiator_guild:
@@ -39,7 +39,7 @@ async def declare_war_validation(
 
     # 3. Проверка: существует ли целевая гильдия
     result = await session.execute(
-        select(Guild).where(Guild.id == data.target_guild_id)
+        select(GuildORM).where(GuildORM.id == data.target_guild_id)
     )
     target_guild = result.scalar_one_or_none()
     if not target_guild:

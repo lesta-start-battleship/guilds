@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Union
-from db.database import get_db
-from db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
-from db.models.guild import Member
+from infra.db.database import get_db
+from infra.db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
+from infra.db.models.guild import MemberORM
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .schemas import GuildWarListResponse, GuildWarListParams, GuildWarHistoryListResponse, GuildWarItem, GuildWarHistoryItem
@@ -26,9 +26,9 @@ async def list_guild_war_requests(
 
     # 🔒 Проверка, что user_id — участник указанной гильдии
     result = await session.execute(
-        select(Member).where(
-            Member.user_id == params.user_id,
-            Member.guild_id == params.guild_id
+        select(MemberORM).where(
+            MemberORM.user_id == params.user_id,
+            MemberORM.guild_id == params.guild_id
         )
     )
     if not result.scalar_one_or_none():

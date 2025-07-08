@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, status, Depends
+from fastapi.security import HTTPAuthorizationCredentials
 
 from domain.exceptions.guild import GuildAlreadyExistsException, GuildNotExistsException
 from domain.exceptions.member import MemberAlreadyInGuildException, MemberNotOwnerException
@@ -10,6 +11,8 @@ from schemas.guild import GuildResponse, CreateGuildRequest, EditGuildRequest, G
 
 from services.guild_ import GuildService
 from dependencies.services import get_guild_service
+
+from utils.validate_token import http_bearer, validate_token
 
 from .responses.guild import guild_not_found, guild_already_exists, uncorrect_guild_tag
 from .responses.member import member_already_in_guild, member_is_not_owner
@@ -53,11 +56,12 @@ async def get_guild_by_tag(
 @router.post('/', response_model=Response[GuildResponse])
 async def create_guild(
     guild_form: CreateGuildRequest,
-    user_id: int,
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        guild = await guild_service.create_guild(guild_form, user_id, None)
+        payload = await validate_token(token)
+        guild = await guild_service.create_guild(guild_form, int(payload['sub']), payload['username'])
         return Response(
             error_code=status.HTTP_201_CREATED,
             value=guild
@@ -73,11 +77,12 @@ async def create_guild(
 @router.delete('/{tag}', response_model=MessageResponse)
 async def delete_guild(
     tag: Annotated[str, Path(..., description='Guild tag')],
-    user_id: int,
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        await guild_service.delete_guild(tag, user_id)
+        payload = await validate_token(token)
+        await guild_service.delete_guild(tag, int(payload['sub']))
         return Response(
         error_code=status.HTTP_200_OK
     )
@@ -93,11 +98,12 @@ async def delete_guild(
 async def edit_guild(
     edit_form: EditGuildRequest,
     tag: Annotated[str, Path(..., description='Guild tag')],
-    user_id: int,
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
     guild_service: GuildService = Depends(get_guild_service)
     ):
     try:
-        guild = await guild_service.edit_guild(tag, user_id, edit_form)
+        payload = await validate_token(token)
+        guild = await guild_service.edit_guild(tag, int(payload['sub']), edit_form)
         return Response(
             error_code=status.HTTP_200_OK,
             value=guild

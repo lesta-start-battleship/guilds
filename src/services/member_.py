@@ -30,10 +30,8 @@ class MemberService:
         return [member.user_id for member in members]
     
     
-    async def on_username_changed(self, user_id: int, username: str) -> bool:
+    async def on_username_changed(self, user_id: int, username: str):
         member = await self.member_repo.get_by_id(user_id)
         if member:
             member.username = username
             await self.member_repo.save(member)
-            return True
-        return False
