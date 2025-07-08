@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from db.models.guild_war import WarStatus
-from typing import Literal
+from typing import Literal, List, Optional
+from fastapi import Query
 
 class DeclareWarRequest(BaseModel):
     initiator_guild_id: int = Field(..., description="ID гильдии, которая инициирует войну")
@@ -65,3 +66,64 @@ class DeclinedWarMessage(BaseModel):
     target_owner_id: int
     declined_at: datetime
     correlation_id: str
+
+
+class GuildWarItem(BaseModel):
+    id: int
+    initiator_guild_id: int
+    target_guild_id: int
+    status: WarStatus
+    created_at: datetime
+
+class GuildWarListResponse(BaseModel):
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+    results: List[GuildWarItem]
+
+
+class GuildWarHistoryItem(BaseModel):
+    id: int
+    war_id: int
+    initiator_guild_id: int
+    target_guild_id: int
+    status: WarStatus
+    created_at: datetime
+    finished_at: datetime
+
+
+class GuildWarHistoryListResponse(BaseModel):
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+    results: List[GuildWarHistoryItem]
+
+
+class GuildWarListParams(BaseModel):
+    owner_id: int
+    is_initiator: bool = False
+    is_target: bool = False
+    status: Optional[WarStatus] = None
+    page: int = 1
+    page_size: int = 20
+
+    @classmethod
+    def as_query_params(
+        cls,
+        owner_id: int = Query(..., description="ID владельца гильдии"),
+        is_initiator: bool = Query(False, description="Получить заявки, где гильдия инициатор"),
+        is_target: bool = Query(False, description="Получить заявки, где гильдия цель"),
+        status: Optional[WarStatus] = Query(None, description="Фильтр по статусу"),
+        page: int = Query(1, ge=1, description="Номер страницы"),
+        page_size: int = Query(20, ge=1, le=100, description="Размер страницы"),
+    ):
+        return cls(
+            owner_id=owner_id,
+            is_initiator=is_initiator,
+            is_target=is_target,
+            status=status,
+            page=page,
+            page_size=page_size
+        )

@@ -57,18 +57,17 @@ async def declare_war(
 
         # 2. Ждём ответ из Redis
     
-        key = f"rage-response:{correlation_id}"
-        rage_response = await redis.redis.blpop(key, timeout=60)
+        # key = f"rage-response:{correlation_id}"
+        # rage_response = await redis.redis.blpop(key, timeout=60)
 
-        if not rage_response:
-            raise HTTPException(504, "Timeout while validating rage points")
+        # if not rage_response:
+        #     raise HTTPException(504, "Timeout while validating rage points")
 
-        _, value = rage_response
-        if value.decode("utf-8") != "true":
-            raise HTTPException(400, "Not enough rage points to declare war")
+        # _, value = rage_response
+        # if value.decode("utf-8") != "true":
+        #     raise HTTPException(400, "Not enough rage points to declare war")
         
-        # ✅ Удаляем ключ после успешной проверки
-        await redis.redis.delete(key)
+        # await redis.redis.delete(key)
         
 
         async with session.begin():  # Обеспечивает транзакционность
