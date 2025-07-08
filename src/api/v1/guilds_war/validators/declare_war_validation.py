@@ -142,6 +142,6 @@ async def declare_war_validation(
     if value.decode("utf-8") != "true":
         raise HTTPException(400, "Not enough rage points to declare war")
     
-    # await redis.redis.delete(key) /// нельзя тут удалять (только когда status: fininshed cancled declined expired)
+    await redis.redis.delete(key)
 
     return correlation_id 

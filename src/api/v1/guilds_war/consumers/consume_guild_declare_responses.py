@@ -5,6 +5,7 @@ from cache.redis_instance import redis
 
 from settings import settings, KafkaTopics, KAFKA_GROUP_ID
 
+
 async def consume_guild_declare_responses(app: FastAPI):
     consumer = AIOKafkaConsumer(
         KafkaTopics.auth_guild_war_declare_response_guild,  # <- Твой топик
