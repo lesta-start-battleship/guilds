@@ -12,7 +12,7 @@ async def consume_scoreboard_guild_war(app: FastAPI):
         bootstrap_servers=settings.kafka_service,
         group_id=KAFKA_GROUP_ID,
         enable_auto_commit=True,
-        auto_offset_reset="latest"
+        auto_offset_reset="earliest"
     )
 
     await consumer.start()
