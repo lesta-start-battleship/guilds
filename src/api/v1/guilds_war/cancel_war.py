@@ -6,10 +6,7 @@ from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
 from fastapi.security import HTTPAuthorizationCredentials
 from settings import KafkaTopics
-
-
 from infra.cache.redis_instance import redis
-
 
 from utils.validate_token import validate_token, http_bearer
 from infra.db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory

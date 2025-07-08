@@ -4,7 +4,7 @@ from sqlalchemy import select, func
 from typing import Union
 from infra.db.database import get_db
 from infra.db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
-from infra.db.models.guild import MemberORM
+from infra.db.models.guild import MemberORM as Member
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from .schemas import GuildWarListResponse, GuildWarListParams, GuildWarHistoryListResponse, GuildWarItem, GuildWarHistoryItem

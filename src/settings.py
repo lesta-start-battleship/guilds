@@ -28,10 +28,11 @@ class KafkaTopics:
     guild_war_canceled_declined_expired = "guild_war_canceled_declined_expired"
     guild_war_finished = "guild_war_finished"
     auth_guild_war_declare_response_guild = "auth.guild_war.declare.response.guild"
-    
+    scoreboard_guild_war = "prod.scoreboard.fact.guild-war.1"
+
     auth_username_change = 'prod.auth.fact.username-change.1'
     auth_user_delete = 'prod.auth.fact.user-delete.1'
-    
+
 
 REDIS_URL = os.getenv('REDIS_URL')
 print(REDIS_URL)

@@ -11,7 +11,7 @@ from typing import Union
 from aiokafka import AIOKafkaProducer
 from pydantic import BaseModel
 
-from infra.db.models.guild import GuildORM
+from infra.db.models.guild import GuildORM as Guild
 
 
 async def check_guild_owner(
@@ -20,7 +20,7 @@ async def check_guild_owner(
     guild_id: int
 ) -> None:
     result = await session.execute(
-        select(GuildORM.owner_id).where(GuildORM.id == guild_id)
+        select(Guild.owner_id).where(Guild.id == guild_id)
     )
     owner_id = result.scalar_one_or_none()
 
@@ -47,7 +47,7 @@ async def get_guild_owner(session: AsyncSession, guild_id: int) -> int:
     #Получает owner_id гильдии по её ID.
 
     result = await session.execute(
-        select(GuildORM.owner_id).where(GuildORM.id == guild_id)
+        select(Guild.owner_id).where(Guild.id == guild_id)
     )
     owner_id = result.scalar_one_or_none()
     if owner_id is None:

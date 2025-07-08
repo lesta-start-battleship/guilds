@@ -5,7 +5,7 @@ import uuid
 
 from settings import KafkaTopics
 from infra.cache.redis_instance import redis
-from infra.db.models.guild import GuildORM
+from infra.db.models.guild import GuildORM as Guild
 from infra.db.models.guild_war import GuildWarRequest, WarStatus
 
 from ..schemas import DeclareWarRequest
@@ -24,7 +24,7 @@ async def declare_war_validation(
 
     # 1. Проверка: существует ли инициирующая гильдия
     result = await session.execute(
-        select(GuildORM).where(GuildORM.id == data.initiator_guild_id)
+        select(Guild).where(Guild.id == data.initiator_guild_id)
     )
     initiator_guild = result.scalar_one_or_none()
     if not initiator_guild:
@@ -39,7 +39,7 @@ async def declare_war_validation(
 
     # 3. Проверка: существует ли целевая гильдия
     result = await session.execute(
-        select(GuildORM).where(GuildORM.id == data.target_guild_id)
+        select(Guild).where(Guild.id == data.target_guild_id)
     )
     target_guild = result.scalar_one_or_none()
     if not target_guild:
@@ -142,6 +142,6 @@ async def declare_war_validation(
     if value.decode("utf-8") != "true":
         raise HTTPException(400, "Not enough rage points to declare war")
     
-    # await redis.redis.delete(key) /// нельзя тут удалять (только когда status: fininshed cancled declined expired)
+    await redis.redis.delete(key)
 
     return correlation_id 

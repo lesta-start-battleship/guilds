@@ -5,13 +5,14 @@ from infra.cache.redis_instance import redis
 
 from settings import settings, KafkaTopics, KAFKA_GROUP_ID
 
+
 async def consume_guild_declare_responses(app: FastAPI):
     consumer = AIOKafkaConsumer(
         KafkaTopics.auth_guild_war_declare_response_guild,  # <- Твой топик
         bootstrap_servers=settings.kafka_service,
         group_id=KAFKA_GROUP_ID,
         enable_auto_commit=True,
-        auto_offset_reset="latest"
+        auto_offset_reset="earliest"
     )
 
     await consumer.start()
@@ -32,7 +33,7 @@ async def consume_guild_declare_responses(app: FastAPI):
                 key = f"rage-response:{correlation_id}"
                 value = "true" if success else "false"
 
-                await redis.redis.rpush(key, value)
+                await redis.redis.set(key, value)
 
                 print(f"[Kafka->Redis] Stored result for {correlation_id}: {value}")
 
