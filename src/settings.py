@@ -12,10 +12,25 @@ MONGO_DATABASE_URL = os.getenv("MONGO_DB_CONNECTION_URI")
 KAFKA_BOOTSTRAP_SERVERS = os.getenv('KAFKA_BOOTSTRAP_SERVERS')
 
 
+allow_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOW_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+
+KAFKA_GROUP_ID = "guild_service"
+
 class KafkaTopics:
     guild_war_confirm = "guild_war_confirm"
+    guild_war_declare = "guild_war_declare"
+    initiator_guild_wants_declare_war = "initiator_guild_wants_declare_war"
+    guild_war_canceled_declined_expired = "guild_war_canceled_declined_expired"
+    guild_war_finished = "guild_war_finished"
+    auth_guild_war_declare_response_guild = "auth.guild_war.declare.response.guild"
 
 REDIS_URL = os.getenv('REDIS_URL')
+print(REDIS_URL)
 
 class Project(BaseModel):
     """

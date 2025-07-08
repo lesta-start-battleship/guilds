@@ -4,7 +4,8 @@ services:
   lesta-games-app:
     build: .
     container_name: ${APP_CONTAINER_NAME}
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -c "/wait-for-it.sh lesta-games-db:5432 -- alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --reload --forwarded-allow-ips=${ALLOW_ORIGINS}"
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
@@ -49,6 +50,10 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    depends_on:
+      - lesta-games-db
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - lesta
 
@@ -92,11 +97,27 @@ services:
     networks:
       - lesta
 
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - "9000:9000"  
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: always
+    networks:
+      - lesta
+
 volumes:
   postgres_data:
     name: lesta_postgres_data
   dbdata6:
     name: lesta_mongodb_data
+  portainer_data:
+    name: lesta_portainer_data
+  pgadmin_data:
+    name: lesta_pgadmin_data
 
 
 networks:

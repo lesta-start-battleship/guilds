@@ -26,7 +26,7 @@ class GuildWarRequestHistory(Base):
     __tablename__ = "guild_war_requests_history"
 
     id = Column(Integer, primary_key=True, index=True)
-    request_id = Column(Integer, index=True, nullable=False)
+    war_id = Column(Integer, index=True, nullable=False)
     initiator_guild_id = Column(Integer, index=True)
     target_guild_id = Column(Integer, index=True)
     status = Column(SqlEnum(WarStatus, name="warstatus"), nullable=False)

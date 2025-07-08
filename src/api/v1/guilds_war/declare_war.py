@@ -1,23 +1,30 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, select, func
 from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
+from fastapi.security import  HTTPAuthorizationCredentials
 
 from infra.db.models.guild import GuildORM
 from infra.db.models.guild_war import GuildWarRequest, WarStatus
 from infra.db.database import get_db
+from utils.validate_token import validate_token, http_bearer
+from settings import KafkaTopics
+from infra.cache.redis_instance import redis
 
-from .schemas import DeclareWarRequest, DeclareWarResponse
-from .utils import check_guild_owner, advisory_lock_key
+from .schemas import DeclareWarRequest, DeclareWarResponse, DeclareWarMessage
+from .utils import send_kafka_message
+from .validators.declare_war_validation import declare_war_validation
+
 
 router = APIRouter()
 
 @router.post("/declare", response_model=DeclareWarResponse)
 async def declare_war(
     data: DeclareWarRequest,
-    session: AsyncSession = Depends(get_db)
+    request: Request, 
+    session: AsyncSession = Depends(get_db),
+    token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
         async with session.begin():  # Обеспечивает транзакционность
@@ -37,6 +44,12 @@ async def declare_war(
 
             # 2. Проверка: пользователь — владелец этой гильдии
             await check_guild_owner(
+        await validate_token(token)
+
+        async with session.begin():
+
+            correlation_id = await declare_war_validation(
+                data=data,
                 session=session,
                 user_id=data.initiator_owner_id,
                 guild_id=data.initiator_guild_id
@@ -109,6 +122,10 @@ async def declare_war(
                 )
 
             # 8. Создаём заявку
+                request=request
+            )
+            
+            #Создаём заявку
             new_request = GuildWarRequest(
                 initiator_guild_id=data.initiator_guild_id,
                 target_guild_id=data.target_guild_id,
@@ -118,12 +135,34 @@ async def declare_war(
             session.add(new_request)
             await session.flush()
 
+
+            #привязываем correlation_id сессии кафки к конертной войне
+            war_id = new_request.id
+            await redis.redis.set(f"war-correlation:{war_id}", correlation_id)
+
+
+            # Отправка в Kafka
+            message = DeclareWarMessage(
+                war_id=new_request.id,
+                initiator_guild_id=new_request.initiator_guild_id,
+                target_guild_id=new_request.target_guild_id,
+                status=new_request.status,
+                created_at=new_request.created_at,
+                correlation_id=correlation_id
+            )
+            await send_kafka_message(
+                request=request,
+                topic=KafkaTopics.guild_war_declare,
+                message=message,
+            )
+
+
         return DeclareWarResponse(
-            request_id=new_request.id,
-            initiator_guild_id=new_request.initiator_guild_id,
-            target_guild_id=new_request.target_guild_id,
-            status=new_request.status,
-            created_at=new_request.created_at,
+                war_id=new_request.id,
+                initiator_guild_id=new_request.initiator_guild_id,
+                target_guild_id=new_request.target_guild_id,
+                status=new_request.status,
+                created_at=new_request.created_at,
         )
     
     except DBAPIError as e:
