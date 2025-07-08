@@ -11,7 +11,7 @@ from typing import Union
 from aiokafka import AIOKafkaProducer
 from pydantic import BaseModel
 
-from db.models.guild import Guild
+from infra.db.models.guild import GuildORM as Guild
 
 
 async def check_guild_owner(

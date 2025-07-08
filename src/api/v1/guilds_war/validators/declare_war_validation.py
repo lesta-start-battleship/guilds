@@ -4,9 +4,9 @@ from sqlalchemy import and_, or_, select, func
 import uuid
 
 from settings import KafkaTopics
-from cache.redis_instance import redis
-from db.models.guild import Guild
-from db.models.guild_war import GuildWarRequest, WarStatus
+from infra.cache.redis_instance import redis
+from infra.db.models.guild import GuildORM as Guild
+from infra.db.models.guild_war import GuildWarRequest, WarStatus
 
 from ..schemas import DeclareWarRequest
 from ..utils import check_guild_owner, advisory_lock_key, send_kafka_message

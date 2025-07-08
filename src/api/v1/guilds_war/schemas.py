@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from db.models.guild_war import WarStatus
+from infra.db.models.guild_war import WarStatus
 from typing import Literal, List, Optional
 from fastapi import Query
 

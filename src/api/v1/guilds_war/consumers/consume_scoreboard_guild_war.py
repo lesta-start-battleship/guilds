@@ -1,7 +1,7 @@
 from aiokafka import AIOKafkaConsumer
 from fastapi import FastAPI
 import json
-from cache.redis_instance import redis
+from infra.cache.redis_instance import redis
 
 from settings import settings, KafkaTopics, KAFKA_GROUP_ID
 from .finalize_war import finalize_war

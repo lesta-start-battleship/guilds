@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
-from db.database import get_db
+from infra.db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
+from infra.db.database import get_db
 from .schemas import GuildWarItem, GuildWarHistoryItem
 from typing import Union
 from fastapi.security import HTTPAuthorizationCredentials

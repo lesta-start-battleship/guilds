@@ -5,12 +5,12 @@ from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
 
 from fastapi.security import HTTPAuthorizationCredentials
-from cache.redis_instance import redis
+from infra.cache.redis_instance import redis
 
 from utils.validate_token import validate_token, http_bearer
 from settings import KafkaTopics
-from db.models.guild_war import WarStatus
-from db.database import get_db
+from infra.db.models.guild_war import WarStatus
+from infra.db.database import get_db
 
 from .schemas import ConfirmWarRequest, ConfirmWarResponse, ConfirmWarMessage
 from .utils import get_guild_owner, send_kafka_message

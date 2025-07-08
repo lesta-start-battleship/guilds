@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.database import get_db
+from infra.db.database import get_db
 from services.chat_service import handle_websocket
 
 router = APIRouter()

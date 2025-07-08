@@ -7,9 +7,9 @@ from fastapi.security import  HTTPAuthorizationCredentials
 
 from utils.validate_token import validate_token, http_bearer
 from settings import KafkaTopics
-from cache.redis_instance import redis
-from db.models.guild_war import GuildWarRequest, WarStatus
-from db.database import get_db
+from infra.cache.redis_instance import redis
+from infra.db.models.guild_war import GuildWarRequest, WarStatus
+from infra.db.database import get_db
 
 from .schemas import DeclareWarRequest, DeclareWarResponse, DeclareWarMessage
 from .utils import send_kafka_message

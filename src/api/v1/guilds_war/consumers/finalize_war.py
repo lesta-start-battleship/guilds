@@ -1,5 +1,5 @@
-from db.database import async_session_maker
-from db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
+from infra.db.database import async_session_maker
+from infra.db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStatus
 from datetime import datetime, timezone
 from sqlalchemy import select
 
