@@ -5,11 +5,10 @@ from db.models.guild_war import GuildWarRequest, GuildWarRequestHistory, WarStat
 from db.database import get_db
 from .schemas import GuildWarItem, GuildWarHistoryItem
 from typing import Union
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from .utils import check_user_access
+from fastapi.security import HTTPAuthorizationCredentials
+from utils.validate_token import validate_token, http_bearer
 
 router = APIRouter()
-http_bearer = HTTPBearer()
 
 @router.get("/list/{war_id}", response_model=Union[GuildWarItem, GuildWarHistoryItem])
 async def get_war_by_id(
@@ -18,8 +17,7 @@ async def get_war_by_id(
     token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     
-    payload = await check_user_access(token)
-    print(payload)
+    await validate_token(token)
 
     # 1. Ищем в активных (pending / active)
     result = await session.execute(

@@ -3,19 +3,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import  HTTPAuthorizationCredentials
 
+from utils.validate_token import validate_token, http_bearer
 from settings import KafkaTopics
 from cache.redis_instance import redis
 from db.models.guild_war import GuildWarRequest, WarStatus
 from db.database import get_db
 
 from .schemas import DeclareWarRequest, DeclareWarResponse, DeclareWarMessage
-from .utils import send_kafka_message, check_user_access
+from .utils import send_kafka_message
 from .validators.declare_war_validation import declare_war_validation
 
+
 router = APIRouter()
-http_bearer = HTTPBearer()
 
 @router.post("/declare", response_model=DeclareWarResponse)
 async def declare_war(
@@ -25,7 +26,7 @@ async def declare_war(
     token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
-        await check_user_access(token)
+        await validate_token(token)
 
         async with session.begin():
 

@@ -1,24 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, select, func
 from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
-from aiokafka import AIOKafkaProducer
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+from fastapi.security import HTTPAuthorizationCredentials
 from cache.redis_instance import redis
 
+from utils.validate_token import validate_token, http_bearer
 from settings import KafkaTopics
-from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
+from db.models.guild_war import WarStatus
 from db.database import get_db
 
-from .schemas import ConfirmWarRequest, ConfirmWarResponse, DeclinedWarMessage, ConfirmWarMessage
-from .utils import check_guild_owner, advisory_lock_key, get_guild_owner, send_kafka_message, check_user_access
+from .schemas import ConfirmWarRequest, ConfirmWarResponse, ConfirmWarMessage
+from .utils import get_guild_owner, send_kafka_message
 from .validators.confirm_war_validation import confirm_war_validation
 from .validators.delete_conflict_request import delete_conflict_request
 
 router = APIRouter()
-http_bearer = HTTPBearer()
 
 @router.post("/confirm/{war_id}", response_model=ConfirmWarResponse)
 async def confirm_war(
@@ -29,7 +28,7 @@ async def confirm_war(
     token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
-        await check_user_access(token)
+        await validate_token(token)
 
         async with session.begin():  # Обеспечивает транзакционность
             

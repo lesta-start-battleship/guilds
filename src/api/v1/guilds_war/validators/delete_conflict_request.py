@@ -1,20 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, Request
+from fastapi import  Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, select, func
-from datetime import datetime, timezone
-from sqlalchemy.exc import DBAPIError
-from asyncpg.exceptions import DeadlockDetectedError
-from aiokafka import AIOKafkaProducer
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import or_, select
+from datetime import datetime
+
 from cache.redis_instance import redis
 
 from settings import KafkaTopics
 from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
-from db.database import get_db
-
-from ..schemas import ConfirmWarRequest, ConfirmWarResponse, DeclinedWarMessage, ConfirmWarMessage
-from ..utils import check_guild_owner, advisory_lock_key, get_guild_owner, send_kafka_message, check_user_access
-
+from ..schemas import ConfirmWarRequest, DeclinedWarMessage
+from ..utils import  get_guild_owner, send_kafka_message
 
 async def delete_conflict_request(
     data: ConfirmWarRequest,

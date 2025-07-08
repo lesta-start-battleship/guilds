@@ -4,18 +4,20 @@ from sqlalchemy import select, func
 from datetime import datetime, timezone
 from sqlalchemy.exc import DBAPIError
 from asyncpg.exceptions import DeadlockDetectedError
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials
 from settings import KafkaTopics
 from cache.redis_instance import redis
 
+
+
+from utils.validate_token import validate_token, http_bearer
 from db.models.guild_war import GuildWarRequest, WarStatus, GuildWarRequestHistory
 from db.database import get_db
 
 from .schemas import CancelWarRequest, CancelWarResponse, CancelWarMessage
-from .utils import check_guild_owner, advisory_lock_key, send_kafka_message, get_guild_owner, check_user_access
+from .utils import check_guild_owner, advisory_lock_key, send_kafka_message, get_guild_owner
 
 router = APIRouter()
-http_bearer = HTTPBearer()
 
 @router.post("/cancel/{war_id}", response_model=CancelWarResponse)
 async def cancel_war(
@@ -26,7 +28,7 @@ async def cancel_war(
     token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
-        await check_user_access(token)
+        await validate_token(token)
          
         async with session.begin():
             result = await session.execute(
