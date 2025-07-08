@@ -26,7 +26,7 @@ async def cancel_war(
     token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
-        payload = await check_user_access(token)
+        await check_user_access(token)
          
         async with session.begin():
             result = await session.execute(

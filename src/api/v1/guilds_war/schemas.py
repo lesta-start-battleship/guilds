@@ -17,9 +17,27 @@ class DeclareWarResponse(BaseModel):
     status: WarStatus = Field(..., description="Статус заявки")
     created_at: datetime = Field(..., description="Дата и время создания заявки")
 
+    
+class DeclareWarMessage(BaseModel):
+    war_id: int
+    initiator_guild_id: int
+    target_guild_id: int
+    status: Literal[WarStatus.pending]
+    created_at: datetime
+    correlation_id: str
 
 class ConfirmWarRequest(BaseModel):
     target_owner_id: int = Field(..., description="ID пользователя, подтверждающего войну")
+
+class ConfirmWarMessage(BaseModel):
+    war_id: int
+    initiator_guild_id: int
+    target_guild_id: int
+    status: Literal[WarStatus.active]
+    updated_at: datetime
+    initiator_owner_id: int
+    target_owner_id: int
+    correlation_id: str
 
 class ConfirmWarResponse(BaseModel):
     war_id: int
