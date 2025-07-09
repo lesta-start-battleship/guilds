@@ -69,11 +69,11 @@ class GuildService:
             description=guild_req.description,
             owner_id=user_id
         )
-        await self.guild_repo.create(guild)
+        guild = await self.guild_repo.create(guild)
         
-        role = await self.role_repo.get_by_title('cabin_boy')
+        role = await self.role_repo.get_by_title('owner')
         if not role:
-            raise RoleNotFoundException('cabin_boy')
+            raise RoleNotFoundException('owner')
         
         member = Member(
             user_id=user_id,

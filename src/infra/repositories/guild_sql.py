@@ -70,15 +70,10 @@ class SQLGuildRepository(GuildRepositoryBase):
             existing.owner_id = guild.owner_id
             existing.title = guild.title
             existing.description = guild.description
+            existing.is_active = guild.is_active
+            existing.is_full = guild.is_full
         else:
-            guild_orm = GuildORM(
-                id=guild.id,
-                tag=str(guild.tag),
-                title=guild.title,
-                description=guild.description,
-                owner_id=guild.owner_id
-            )
-            self.session.add(guild_orm)
+            await self.create(guild)
             
         await self.session.commit()
     
@@ -88,13 +83,15 @@ class SQLGuildRepository(GuildRepositoryBase):
             tag=str(guild.tag),
             title=guild.title,
             description=guild.description,
-            owner_id=guild.owner_id
+            owner_id=guild.owner_id,
+            is_active = guild.is_active,
+            is_full = guild.is_full
         )
         
         self.session.add(guild_orm)
         await self.session.commit()
         
-        return self.get_by_tag(str(guild.tag))
+        return await self.get_by_tag(str(guild.tag))
     
     
     async def delete(self, guild_tag: str) -> None:
