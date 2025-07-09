@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from time import perf_counter
+
+from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 
 from fastapi.openapi.utils import get_openapi
@@ -11,8 +13,10 @@ from api.v1.guilds_war.consumers.consume_guild_declare_responses import consume_
 from api.v1.guilds_war.consumers.consume_scoreboard_guild_war import consume_scoreboard_guild_war
 
 from dependencies.repositories import get_producer, init_producer
+from monitoring.metrics import metrics
 from settings import settings, allow_origins
-    
+
+from prometheus_client import make_asgi_app
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -63,6 +67,22 @@ app.add_middleware(
     allow_methods=["*"], 
     allow_headers=["*"],
 )
+
+
+metrics_app = make_asgi_app()
+app.mount('/metrics', metrics_app)
+
+
+@app.middleware('http')
+async def metric_middleware(request: Request, call_next):
+    start_time = perf_counter()
+    response = await call_next(request)
+    process_time = perf_counter() - start_time
+    method = request.method
+    status_code = response.status_code
+    metrics.http_requests_latency.labels(method, status_code).observe(process_time)
+    metrics.http_requests_count.labels(method, status_code).inc()
+    return response
 
 
 app.include_router(v1)
