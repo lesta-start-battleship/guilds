@@ -35,7 +35,7 @@ async def get_member_by_user_id(
             value=member
         )
     except MemberNotFoundException:
-        return MessageResponse(error=MemberNotFoundException.message, error_code=status.HTTP_404_NOT_FOUND)
+        return member_not_found
 
 
 @router.get('/guild_id/{guild_id}', response_model=Response[List[int]])
@@ -50,7 +50,7 @@ async def get_members_by_guild_id(
             value=members
         )
     except GuildNotExistsException:
-        return MessageResponse(error=GuildNotExistsException.message, error_code=status.HTTP_404_NOT_FOUND)
+        return guild_not_found
     
     
 @router.get('/{tag}', response_model=Response[MemberPagination])
