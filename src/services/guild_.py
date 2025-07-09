@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from domain.entities.guild import Guild, Member
 
@@ -44,9 +44,9 @@ class GuildService:
         return guild_domain_to_dto(guild)
     
     
-    async def get_guild_list(self, limit: int, offset: int) -> List[GuildResponse]:
-        guilds = await self.guild_repo.list_guilds(offset, limit)
-        return [guild_domain_to_dto(guild) for guild in guilds]
+    async def get_guild_list(self, limit: int, offset: int) -> Tuple[List[GuildResponse], int]:
+        guilds, count = await self.guild_repo.list_guilds(offset, limit)
+        return [guild_domain_to_dto(guild) for guild in guilds], count
     
     
     async def create_guild(

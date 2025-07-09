@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from domain.exceptions.member import MemberNotFoundException
 from domain.repositories.member_repo import MemberRepositoryBase
@@ -19,10 +19,10 @@ class MemberService:
         return member_domain_to_dto(member)
     
     
-    async def get_guild_members(self, tag: str, limit: int, offset: int) -> List[MemberResponse]:
+    async def get_guild_members(self, tag: str, limit: int, offset: int) -> Tuple[List[MemberResponse], int]:
         valid_tag = Tag(tag)
-        members = await self.member_repo.list_members_by_guild_tag(str(valid_tag), offset, limit)
-        return [member_domain_to_dto(member) for member in members]
+        members, count = await self.member_repo.list_members_by_guild_tag(str(valid_tag), offset, limit)
+        return [member_domain_to_dto(member) for member in members], count
     
     
     async def get_members_by_guild_id(self, guild_id: int) -> List[int]:

@@ -31,7 +31,7 @@ class KafkaTopics:
     scoreboard_guild_war = "prod.scoreboard.fact.guild-war.1"
 
     auth_username_change = 'prod.auth.fact.username-change.1'
-    auth_user_delete = 'prod.auth.fact.user-delete.1'
+    auth_user_delete = 'auth.user.delete.response.guild'
 
 
 REDIS_URL = os.getenv('REDIS_URL')

@@ -56,18 +56,18 @@ async def get_members_by_guild_id(
 @router.get('/{tag}', response_model=Response[MemberPagination])
 async def get_members_by_guild_tag(
     tag: Annotated[str, Path(..., description='Guild tag')],
-    offset: int = Query(0, ge=0, description='Offset from the beginning'),
+    page: int = Query(1, ge=1, description='Number of page'),
     limit: int = Query(10, ge=1, description='Number of items to return'),
     member_service: MemberService = Depends(get_member_service)
     ):
     try:
-        members = await member_service.get_guild_members(tag, limit, offset)
+        members, count = await member_service.get_guild_members(tag, limit, page)
         return Response(
             error_code=status.HTTP_200_OK,
             value=MemberPagination(
                 items=members,
-                total_items=0,
-                total_pages=0
+                total_items=count,
+                total_pages=(count+limit-1)//limit
             )
         )
     except InvalidTagFormatException:

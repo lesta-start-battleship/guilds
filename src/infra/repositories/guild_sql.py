@@ -1,7 +1,5 @@
-from typing import Optional, List
-
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from infra.db.models.guild import GuildORM, MemberORM
@@ -49,15 +47,18 @@ class SQLGuildRepository(GuildRepositoryBase):
         return guild_orm_to_domain(guild) if guild else None
     
     
-    async def list_guilds(self, offset: int = 0, limit: int = 10):
+    async def list_guilds(self, page: int = 1, limit: int = 10):
         result = await self.session.execute(
             select(GuildORM).
             options(selectinload(GuildORM.members).selectinload(MemberORM.role)).
             limit(limit).
-            offset(offset)
+            offset((page-1)*limit)
         )
         guilds = result.scalars().all()
-        return [guild_orm_to_domain(guild) for guild in guilds]
+        
+        count_stmt = select(func.count()).select_from(select(GuildORM).subquery())
+        total = (await self.session.execute(count_stmt)).scalar_one()
+        return [guild_orm_to_domain(guild) for guild in guilds], total
     
     
     async def save(self, guild: Guild):
@@ -93,7 +94,7 @@ class SQLGuildRepository(GuildRepositoryBase):
         self.session.add(guild_orm)
         await self.session.commit()
         
-        return guild_orm_to_domain(guild_orm) if guild_orm else None
+        return self.get_by_tag(str(guild.tag))
     
     
     async def delete(self, guild_tag: str) -> None:

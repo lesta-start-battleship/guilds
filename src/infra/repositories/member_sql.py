@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from infra.db.models.guild import MemberORM, RoleORM
@@ -29,7 +29,7 @@ class SQLMemberRepository(MemberRepositoryBase):
         return member_orm_to_domain(member) if member else None
     
     
-    async def list_members_by_guild_tag(self, guild_tag: str, offset: int = 0, limit: int = 10):
+    async def list_members_by_guild_tag(self, guild_tag: str, page: int = 1, limit: int = 10):
         result = await self.session.execute(
             select(MemberORM).
             options(
@@ -39,11 +39,14 @@ class SQLMemberRepository(MemberRepositoryBase):
             ).
             where(MemberORM.guild_tag == guild_tag).
             limit(limit).
-            offset(offset)
+            offset((page-1)*limit)
         )
         
         members = result.scalars().all()
-        return [member_orm_to_domain(member) for member in members]
+        
+        count_stmt = select(func.count()).select_from(select(MemberORM).subquery())
+        total = (await self.session.execute(count_stmt)).scalar_one()
+        return [member_orm_to_domain(member) for member in members], total
     
     
     async def list_members_by_guild_id(self, guild_id: int):

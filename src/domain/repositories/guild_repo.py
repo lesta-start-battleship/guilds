@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from domain.entities.guild import Guild
 
@@ -15,7 +15,7 @@ class GuildRepositoryBase(ABC):
     async def get_by_owner_id(self, owner_id: int) -> Optional[Guild]: ...
     
     @abstractmethod
-    async def list_guilds(self, offset: int = 0, limit: int = 10) -> List[Guild]: ...
+    async def list_guilds(self, offset: int = 0, limit: int = 10) -> Tuple[List[Guild], int]: ...
     
     @abstractmethod
     async def save(self, guild: Guild) -> None: ...

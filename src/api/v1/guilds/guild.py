@@ -21,17 +21,17 @@ router = APIRouter()
 
 @router.get('/', response_model=Response[GuildPagination])
 async def get_guilds(
-    offset: int = Query(0, ge=0, description='Offset from the beginning'),
+    page: int = Query(1, ge=1, description='Number of page'),
     limit: int = Query(10, ge=1, description='Number of items to return'),
     guild_service: GuildService = Depends(get_guild_service)
     ):
-    guilds = await guild_service.get_guild_list(limit, offset)
+    guilds, count = await guild_service.get_guild_list(limit, page)
     return Response(
         error_code=status.HTTP_200_OK if guilds else status.HTTP_204_NO_CONTENT,
         value=GuildPagination(
             items=guilds,
-            total_items=0,
-            total_pages=0
+            total_items=count,
+            total_pages=(count+limit-1)//limit
         )
     )
  
