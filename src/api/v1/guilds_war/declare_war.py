@@ -25,7 +25,10 @@ async def declare_war(
     token: HTTPAuthorizationCredentials = Depends(http_bearer),
 ):
     try:
-        await validate_token(token)
+        payload = await validate_token(token)
+        user_id = int(payload["sub"])
+        if user_id != data.initiator_owner_id:
+            raise HTTPException(status_code=403, detail="You are not the owner of this guild")
 
         async with session.begin():
 
