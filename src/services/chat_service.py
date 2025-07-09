@@ -5,6 +5,8 @@ from infra.db.models.guild import MemberORM
 
 from fastapi import WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from monitoring.metrics import metrics
 from utils.chat_util import manager, enrich_messages_with_usernames, get_username_by_id
 from dependencies.chat import mongo_repo
 from fastapi.encoders import jsonable_encoder
@@ -31,6 +33,7 @@ async def handle_websocket(guild_id: int, user_id: int, websocket: WebSocket, db
     await manager.connect(guild_id, websocket)
 
     try:
+        metrics.websocket_messages_total.labels(path=str(websocket.url.path)).inc()
         await send_initial_history(websocket, db, guild_id)
         await listen_for_messages(websocket, db, guild_id, member)
     except WebSocketDisconnect:
