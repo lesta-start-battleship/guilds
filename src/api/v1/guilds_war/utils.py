@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 from infra.db.models.guild import GuildORM as Guild
 
-
 async def check_guild_owner(
     session: AsyncSession,
     user_id: int,
@@ -90,3 +89,14 @@ async def send_kafka_message(
         print(f"[Kafka ERROR] {type(e).__name__}: {e}")
 
 
+
+async def check_guild_active(session: AsyncSession, guild_id: int) -> None:
+    result = await session.execute(
+        select(Guild.is_active).where(Guild.id == guild_id)
+    )
+    is_active = result.scalar_one_or_none()
+
+    if is_active is None:
+        raise HTTPException(404, detail="Guild not found")
+    if not is_active:
+        raise HTTPException(400, detail="Guild is not active")

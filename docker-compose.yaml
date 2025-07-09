@@ -67,31 +67,32 @@ services:
       - lesta
 
   mongodb:
+    image: mongo:7
     container_name: lesta-games-mongodb
-    image: mongo:6-jammy
+    restart: always
     ports:
-      - '27017:27017'
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_DB_ADMIN_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_DB_ADMIN_PASSWORD}
     volumes:
       - dbdata6:/data/db
     networks:
       - lesta
 
   mongo-express:
-    image: mongo-express
+    image: mongo-express:1.0.2
     container_name: mongo-express
     restart: always
     ports:
       - "28081:8081"
     environment:
-      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_DB_ADMIN_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_DB_ADMIN_PASSWORD}
       ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_DB_ADMIN_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_DB_ADMIN_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
-    healthcheck:
-      test: echo 'db.stats().ok' | mongo localhost:27017/test --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_URL: "mongodb://${MONGO_DB_ADMIN_USERNAME}:${MONGO_DB_ADMIN_PASSWORD}@mongodb:27017"
     depends_on:
       - mongodb
     networks:

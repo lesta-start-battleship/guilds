@@ -9,7 +9,7 @@ from infra.db.models.guild import GuildORM as Guild
 from infra.db.models.guild_war import GuildWarRequest, WarStatus
 
 from ..schemas import DeclareWarRequest
-from ..utils import check_guild_owner, advisory_lock_key, send_kafka_message
+from ..utils import check_guild_owner, advisory_lock_key, send_kafka_message, check_guild_active
 
 async def declare_war_validation(
     data: DeclareWarRequest,
@@ -44,6 +44,9 @@ async def declare_war_validation(
     target_guild = result.scalar_one_or_none()
     if not target_guild:
         raise HTTPException(status_code=404, detail="Target guild not found")
+    
+    await check_guild_active(session, data.initiator_guild_id)
+    await check_guild_active(session, data.target_guild_id)
 
     # 4. Самой себе — нельзя
     if data.initiator_guild_id == data.target_guild_id:
@@ -102,14 +105,6 @@ async def declare_war_validation(
             status_code=400,
             detail="Target guild is already participating in an active war"
         )
-    
-
-    try:
-        pong = await redis.ping()
-        if not pong:
-            raise HTTPException(500, detail="Redis is not available")
-    except Exception as e:
-        raise HTTPException(500, detail=f"Redis connection failed: {e}")
 
     # Отправка сообщения в Kafka
     correlation_id = str(uuid.uuid4())
@@ -127,7 +122,7 @@ async def declare_war_validation(
 
 
     # #/// УДАЛИТЬ
-    # await redis.redis.rpush(f"rage-response:{correlation_id}", "true") #УДАЛИТЬ
+    await redis.redis.rpush(f"rage-response:{correlation_id}", "true") #УДАЛИТЬ
     # #///
 
     # Ждём ответ из Redis
