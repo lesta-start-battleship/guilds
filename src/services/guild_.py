@@ -136,7 +136,7 @@ class GuildService:
         
         guild.add_member(user_id, role.id, guild_member.user_id, guild_member.role)
         member = await self.member_repo.create(member)
-        self.producer.publish_guild_member_count_changed(guild.id, user_id, guild.members_count)
+        self.producer.publish_guild_member_count_changed(guild.id, user_id, guild.members_count, 1)
         return member_domain_to_dto(member)
     
     
@@ -180,7 +180,7 @@ class GuildService:
         
         guild.remove_member(member.user_id, guild_member.user_id, guild_member.role, member.role)
         await self.member_repo.delete(member.user_id)
-        self.producer.publish_guild_member_count_changed(guild.id, target_user_id, guild.members_count)
+        self.producer.publish_guild_member_count_changed(guild.id, target_user_id, guild.members_count, 0)
         
     
     async def leave_guild(self, tag: str, member_id: int) -> None:
@@ -195,4 +195,4 @@ class GuildService:
         
         guild.leave_guild(guild_member.user_id)
         await self.member_repo.delete(guild_member.user_id)
-        self.producer.publish_guild_member_count_changed(guild.id, member_id, guild.members_count)
+        self.producer.publish_guild_member_count_changed(guild.id, member_id, guild.members_count, 0)
