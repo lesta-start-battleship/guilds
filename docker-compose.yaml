@@ -66,6 +66,14 @@ services:
     networks:
       - lesta
 
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    restart: always
+    networks:
+      - lesta
+
   mongodb:
     image: mongo:7
     container_name: lesta-games-mongodb
@@ -110,6 +118,30 @@ services:
     networks:
       - lesta
 
+
+  lesta-games-prometheus:
+    image: prom/prometheus
+    container_name: ${PROMETHEUS_CONTAINER_NAME}
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus_data/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - lesta
+
+
+  lesta-games-grafana:
+    image: grafana/grafana
+    container_name: ${GRAFANA_CONTAINER_NAME}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - lesta
+
 volumes:
   postgres_data:
     name: lesta_postgres_data
@@ -119,6 +151,18 @@ volumes:
     name: lesta_portainer_data
   pgadmin_data:
     name: lesta_pgadmin_data
+  prometheus_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./prometheus_data
+  grafana_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ./grafana_data
 
 
 networks:
