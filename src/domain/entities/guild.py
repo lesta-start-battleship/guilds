@@ -35,10 +35,6 @@ class Guild:
     title: Optional[str] = None
     description: Optional[str] = None
     id: Optional[int] = None
-    
-    @property
-    def members_count(self):
-        return len(self.members)
 
     @property
     def is_active(self) -> bool:
