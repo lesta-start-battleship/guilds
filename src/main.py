@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.v1 import router as v1
 from api.v1.guilds.broker import broker
+import api.v1.guilds.consumer 
 from api.v1.guilds_war.consumers.consume_guild_declare_responses import consume_guild_declare_responses
 from api.v1.guilds_war.consumers.consume_scoreboard_guild_war import consume_scoreboard_guild_war
 
@@ -22,7 +23,6 @@ from prometheus_client import make_asgi_app
 async def lifespan(app: FastAPI):
     # Запуск Kafka Producer
     await init_producer()
-    # producer = AIOKafkaProducer(bootstrap_servers=settings.kafka_service)
     producer = get_producer()
     await producer.start()
     print("Kafka producer started")
@@ -33,10 +33,11 @@ async def lifespan(app: FastAPI):
     consumer_scoreboard_guild_war_task = asyncio.create_task(consume_scoreboard_guild_war(app))
     
     await broker.start()
-
+    
     yield
 
     # Завершение
+    await broker.stop()
     await producer.stop()
     print("Kafka producer stopped")
 
