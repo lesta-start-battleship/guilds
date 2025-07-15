@@ -17,9 +17,9 @@ class MongoChatRepository:
         cursor = (
             self.collection
             .find({"guild_id": guild_id})
-            .sort("timestamp", -1)
-            .skip(skip)
-            .limit(limit)
+            .sort("timestamp", -1)  # Сортируем по убыванию, чтобы последние были первыми
+            .skip(skip)  # Пропускаем первые `skip` документов
+            .limit(limit)  # Ограничиваем количество документов
         )
         messages = []
         async for doc in cursor:

@@ -57,7 +57,7 @@ async def handle_unauthorized_user(websocket: WebSocket):
 
 async def send_initial_history(websocket: WebSocket, db: AsyncSession, guild_id: int):
     try:
-        history = await mongo_repo.get_messages_by_guild(guild_id, skip=0, limit=2)
+        history = await mongo_repo.get_messages_by_guild(guild_id, skip=0, limit=10)
         enriched = await enrich_messages_with_usernames(db, history)
         await websocket.send_json({
             "type": "history",
