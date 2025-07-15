@@ -26,5 +26,6 @@ class LifecycleService:
     async def on_username_changed(self, user_id: int, username: str):
         try:
             await self.member_service.get_user_by_id(user_id)
+            await self.member_service.on_username_changed(user_id, username)
         except MemberNotFoundException:
             await self.request_service.on_username_changed(user_id, username)
