@@ -23,7 +23,7 @@ async def get_token_websocket(websocket: WebSocket):
         scheme, token = auth_header.split()
         if scheme.lower() != 'bearer':
             raise WebSocketException(code=1008, reason="Invalid authentication scheme")
-        return token  # Возвращаем строку токена
+        return token
     except ValueError:
         raise WebSocketException(code=1008, reason="Invalid Authorization header format")
 
@@ -37,7 +37,8 @@ async def guild_websocket(
 ):
     await websocket.accept()
     metrics.websocket_connections_total.labels(path=str(websocket.url.path)).inc()
-    payload = await validate_token(token)  # Передаем строку токена
+    payload = await validate_token(token)
+    print(f"payload: {payload}")
     user_id = int(payload["sub"])
     await handle_websocket(guild_id, user_id, websocket, db)
 
