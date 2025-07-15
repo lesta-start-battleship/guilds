@@ -32,6 +32,10 @@ class KafkaTopics:
 
     auth_username_change = 'prod.auth.fact.username-change.1'
     auth_user_delete = 'auth.user.delete.response.guild'
+    
+    scoreboard_guild_create = 'prod.guild.fact.guild-create.1'
+    scoreboard_guild_count_change = 'prod.guild.fact.guild-member-change.1'
+    scoreboard_guild_delete = 'prod.guild.fact.guild-delete.1'
 
 
 REDIS_URL = os.getenv('REDIS_URL')

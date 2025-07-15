@@ -44,7 +44,7 @@ class SQLMemberRepository(MemberRepositoryBase):
         
         members = result.scalars().all()
         
-        count_stmt = select(func.count()).select_from(select(MemberORM).subquery())
+        count_stmt = select(func.count()).select_from(select(MemberORM).where(MemberORM.guild_tag == guild_tag).subquery())
         total = (await self.session.execute(count_stmt)).scalar_one()
         return [member_orm_to_domain(member) for member in members], total
     
