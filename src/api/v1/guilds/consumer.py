@@ -24,14 +24,6 @@ class UsernameChanged(UserDeleted):
 #     player_id = int(event['user_id'])
 #     await service.on_user_deleted(player_id)
 
-@broker.subscriber(KafkaTopics.auth_user_delete, group_id=KAFKA_GROUP_ID)
-async def handle_guild_delete(
-    event: dict,
-    service: LifecycleService = Depends(get_lifecycle_service)
-):
-    player_id = int(event['user_id'])
-    await service.on_user_deleted(player_id)
-
 
 @broker.subscriber(KafkaTopics.auth_username_change, group_id=KAFKA_GROUP_ID)
 async def handle_username_change(
