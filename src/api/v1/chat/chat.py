@@ -33,9 +33,8 @@ async def guild_websocket(
     guild_id: int,
     websocket: WebSocket,
     db: AsyncSession = Depends(get_db),
-    token: str = Depends(get_token_websocket),  # Принимаем строку токена
+    token: str = Depends(get_token_websocket),
 ):
-    await websocket.accept()
     metrics.websocket_connections_total.labels(path=str(websocket.url.path)).inc()
     payload = await validate_token(token)
     print(f"payload: {payload}")
